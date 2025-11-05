@@ -65,7 +65,8 @@ The analysis was conducted in RStudio IDE (RStudio 2024.12.0+467 "Kousa Dogwood"
 
 Packages were loaded initially with *pacman* package. Citations were applied to each library at first use in the text.
 
-```{r, load-pkgs}
+```{r}
+#| label: load-packages
 
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(
@@ -137,7 +138,9 @@ The packages drawn on to produce the following report are summarised in @tbl-pkg
 
 Access to PRULO datasets was pre-authorised using the *gargle* package and *googledrive*.
 
-```{r, echo = FALSE}
+```{r}
+#| label: auth2
+#| echo: false
 
 # Set the cache location
 options(gargle_oauth_cache = ".secrets")
@@ -147,9 +150,6 @@ googledrive::drive_auth(
   email = "cscholes@ebma.com.au", 
   cache = ".secrets"
   )
-```
-
-```{r, echo = FALSE}
 
 options(
   gargle_oauth_cache = ".secrets",
@@ -163,7 +163,9 @@ drive_auth(cache = ".secrets", email = TRUE)
 
 A function was generated to retrieve files using the *googledrive* package, to call on later in the analysis for processing data imports.
 
-```{r, echo = FALSE}
+```{r}
+#| label: snapshot-folder
+#| echo: false
 
 base_folder_id1 <- "1og1hWKEXFcy8v8pLSzA_Ii767bbCe_EK"
 
@@ -300,6 +302,7 @@ colnames(PatientTable) <- Patient_Col
 A static registry snapshot was retrieved using the pre-specified function (see *Functions for Processing)* and formatted using *openxlsx* based on the fixed date of preparation of the snapshot (31-Mar-2024) and using *tidyverse* syntax and associated packages (*dplyr, lubridate*). Date columns were prepared for further analysis using *lubridate*.
 
 ```{r}
+#| label: retrieve-snapshot
 
 # Authenticate for sheets using the same token
 gs4_auth(token = drive_token())
@@ -311,6 +314,7 @@ specific_snapshot <- get_specific_snapshot("20240331")
 ```
 
 ```{r}
+#| label: load-snapshot
 
 temp_file1 <- tempfile(fileext = ".xlsx")
 drive_download(
@@ -477,6 +481,7 @@ col_select = c(
 Additional intraoperative data was retrieved manually into a table and imported using *googlesheets.*
 
 ```{r}
+#| label: retrieve-surgical
 
 # Authenticate for sheets using the same token
 gs4_auth(token = drive_token())
@@ -521,6 +526,7 @@ missing_cols <- dplyr::setdiff(SurgicalCols, SnapshotCols)
 Upon review, one row of data was found to have a data entry error for one field (CuffTearSize) which was manually updated in the table.
 
 ```{r}
+#| label: data-correction1
 
 SnapshotComb1 <- dplyr::rows_update(
   SnapshotComb,
@@ -568,7 +574,7 @@ Data manipulation (add columns and filter tables based on column values) was per
 
 ImplantTable2 <- ImplantTable |> filter(stringr::str_detect(
   stringr::str_to_lower(Description),
-  "advance.br")
+  "dynacord")
 )
 
 IncludeAny = paste(ImplantTable2$Reference,sep = "|")
@@ -629,7 +635,7 @@ STROBEFlow <- STROBEInput |> dplyr::filter(
   exclusion2 = case_when(
     is.na(exclusion1) & stringr::str_detect(RegistryStatus,"Opt-out") ~ "Patient Opt-Out",
     is.na(exclusion1) & is.na(ImplantCodes) ~ "No hardware of interest",
-    is.na(exclusion1) & Surgeon != "RP" ~ "Other Surgeon",
+    #is.na(exclusion1) & Surgeon != "RP" ~ "Other Surgeon",
     is.na(exclusion1) & stringr::str_detect(ImplantCodes,paste(IncludeAny,collapse = "|")) ~ NA_character_,
     .default = "No hardware of interest"
   ),
@@ -929,7 +935,10 @@ Mastersheet1b <- Mastersheet1 |> left_join(
 
 Procedure details were extracted from the master table and processed to enable presentations in summary tables.
 
-```{r Management summary}
+```{r}
+#| label: management-summary1
+
+
 OpData <- Mastersheet1b |> dplyr::select(
   TreatmentUID,
   SurgicalTreatment,
@@ -957,6 +966,8 @@ str_detect(str_to_lower(AdjunctProcedures2), "scr|superior|calcific|incorporat|s
 ```
 
 ```{r}
+#| label: management-summary2
+
 OpData2 <- OpData |>
   group_by(TreatmentUID) |>
     summarise(AdjunctProcedures4 = paste(AdjunctProcedures3,collapse = "; ")
@@ -981,7 +992,8 @@ Mastersheet2 <- left_join(
 
 The complications table was also processed for further analysis.
 
-```{r Complications preparation}
+```{r}
+#| label: complications-preparation
 # Join sufficient columns to complictable to perform calculations
 
 ComplicTable1 <- ComplicTable |> rename(
@@ -993,7 +1005,7 @@ ComplicTable1 <- ComplicTable |> rename(
     by = "TreatmentUID"
   ) |> mutate(
     ReopDelay = as.numeric(as.duration(interval(ymd(DateTreatment), ymd(`Reoperation Procedure Date`))),"weeks"),
-    OccurDelay = as.numeric(as.duration(interval(ymd(DateTreatment), ymd(`Date of Occurrence`))),"days"),
+    OccurDelay = as.numeric(as.duration(interval(ymd(DateTreatment), `Date of Occurrence`)),"days"),
 ComplicationNature = str_replace_all(str_to_lower(`Complication Nature`),"[;.,-]","")
 ) |> mutate(
     Intraop = case_when(
@@ -1023,7 +1035,8 @@ str_detect(ComplicationNature,"disloc*|instabil*") ~ "Dislocation - Instability"
 )
 ```
 
-```{r Retrieve relevant complications}
+```{r}
+#| label: relevant-complications
 
 
 ComplicTable2 <- ComplicTable1 |> 
