@@ -1881,11 +1881,11 @@ Details of surgical management are summarised in @tbl-surgery.
 
 ### Record \[14.3\] Follow up
 
-The sample overall had a mean follow up of `{r} round(mean(Mastersheet2$TreatDuration),1)` months.
+The sample overall had a mean follow up of `{r} round(mean(Mastersheet2$TreatDuration),1)` weeks.
 
 ```{r}
 #| label: tbl-followup
-#| tbl-cap: "Summary of case follow up (months) at the time of analysis"
+#| tbl-cap: "Summary of case follow up (weeks) at the time of analysis"
 
 TableFollowup <- Mastersheet2 |>
   dplyr::select(
