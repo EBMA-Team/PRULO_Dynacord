@@ -34,7 +34,7 @@ execute:
 
 # Introduction
 
-This analysis links to the [manuscript](#0) of the Healix BR product. The dataset is derived from the PRULO registry snapshot and live tables. A protocol has been previously prepared for the registry [@scholes2023].
+This analysis links to the [manuscript](https://www.medrxiv.org/content/10.1101/2024.08.19.24312206v1 "Link to preprint") of the Dynacord (Depuy-Mitek, USA) product as one of two companion publications assessing new-to-market hardware. The dataset is derived from the PRULO registry snapshot and live tables. A protocol has been previously prepared for the registry [@scholes2023].
 
 ## Reporting
 
