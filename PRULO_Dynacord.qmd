@@ -12,7 +12,9 @@ number-depth: 3
 date: "2023-Aug-21"
 date-modified: "2025-Mar-31"
 
-bibliography: Dynacord references.bib
+bibliography: 
+  - Dynacord references.bib
+  - grateful-refs.bib  # add this line
 
 
 editor:
