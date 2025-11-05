@@ -1,7 +1,10 @@
 ---
 title: "Clinical outcome of a no. 2 suture (Dynacord): Supplementary analysis report"
-author: "Corey Scholes"
-affiliation: "EBM Analytics"
+author: 
+  - name: Corey Scholes, PhD
+    orcid: 0000-0001-6592-0738
+    email: cscholes@ebma.com.au
+    affiliations: EBM Analytics
 version: 3.0
 type: "website"
 number-sections: true
