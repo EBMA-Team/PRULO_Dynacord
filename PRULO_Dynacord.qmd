@@ -1978,7 +1978,7 @@ TableComplic <- ComplicTable3 %>%
 gtsummary::as_flex_table(TableComplic)
 ```
 
-A summary of the adverse events observed in the same is included in @tbl-complications.
+A summary of the adverse events observed in the cohort is included in @tbl-complications.
 
 ### Record \[15.4\] Patient-reported outcome measures
 
