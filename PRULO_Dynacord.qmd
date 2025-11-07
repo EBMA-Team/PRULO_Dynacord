@@ -10,7 +10,7 @@ type: "website"
 number-sections: true
 number-depth: 3
 date: "2023-Aug-21"
-date-modified: "2025-Mar-31"
+date-modified: "2025-Nov-07"
 
 bibliography: 
   - Dynacord references.bib
@@ -875,11 +875,13 @@ Mastersheet1 <- Mastersheet |> rename_with(
     TreatmentStatus == "Failed" ~ 1,
     .default = 0
   ),
-  TreatEndDate = coalesce(DateStatusChange,ymd(CurrentDate))
-         ) |>
-  mutate(
-  TreatDuration = as.numeric(as.duration(interval(ymd(DateTreatment), ymd(TreatEndDate))),"weeks")
-    ) |> relocate(
+  TreatEndDate = coalesce(DateStatusChange,ymd(CurrentDate)),
+  TreatDuration = as.numeric(as.duration(interval(ymd(DateTreatment), ymd(TreatEndDate))),"weeks"),
+  TreatmentStatus2 = case_when(
+    stringr::str_detect(str_to_lower(TreatmentStatus),"pend|further") ~ "Ongoing",
+      .default = TreatmentStatus
+    )
+  ) |> relocate(
       TearClass, 
       .after = CuffCondition) |> relocate(
         TearArea, 
