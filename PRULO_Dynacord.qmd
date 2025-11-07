@@ -24,10 +24,20 @@ format:
     toc: true
     number-sections: true
     code-fold: true
-  docx: 
+  pdf:
+    documentclass: scrartcl
+    classoption:
+      - DIV=11
+      - numbers=noendperiod
+    papersize: a4        # Changed from letter
+    pdf-engine: xelatex
     toc: true
     number-sections: true
-    toc-depth: 2  
+    number-depth: 3
+    colorlinks: true
+    keep-tex: false      # Set to true only if debugging
+    header-includes:
+      - '\KOMAoption{captions}{tableheading}'  
 execute: 
   echo: true
   warning: false
