@@ -258,7 +258,7 @@ ComplicTable <- googlesheets4::read_sheet(
 
 ImplantTable <- googlesheets4::range_read(
   ss = SheetIDs$ImplantSS,
-  sheet = "Healix", 
+  sheet = "Dynacord", 
   range = "F1:I",
   col_names = TRUE, 
   col_types = "nccc"
@@ -391,7 +391,10 @@ SnapshotComb <- SnapshotRC |> dplyr::bind_rows(
     CombID, .after = TreatmentUID
   ) |> relocate(
     Cohort, .before = EligibleAtPreop
-  )
+  ) |> group_by(CombID) |> mutate(
+  CombIDn = row_number(DateTreatment),
+  CombIDn = tidyr::replace_na(CombIDn,1)
+) |> ungroup()
 
 ```
 
@@ -574,17 +577,7 @@ Inclusion criteria;
 
 Data manipulation (add columns and filter tables based on column values) was performed with *tidyverse* and converted to display format using *gt*.
 
-```{r}
-##Identify Index List by SKU/Ref
 
-ImplantTable2 <- ImplantTable |> filter(stringr::str_detect(
-  stringr::str_to_lower(Description),
-  "dynacord")
-)
-
-IncludeAny = paste(ImplantTable2$Reference,sep = "|")
-
-```
 
 ```{r}
 #| label: tbl-implants
@@ -597,12 +590,54 @@ IncludeAny = paste(ImplantTable2$Reference,sep = "|")
 #   
 
 knitr::kable(
-  ImplantTable2
+  ImplantTable
 )
 
 ```
 
 A dataframe was prepared to generate a flow chart of record retrieval, screening and patient follow up within the sample of interest.
+
+```{r}
+#| label: nonindex-procedure
+#| code-summary: "prepare columns to flag non-index procedures for filtering in STROBE"
+
+IncludeAny = paste(ImplantTable$Reference,sep = "|")
+
+STROBEInput1 <- STROBEInput |> left_join(
+  SnapshotComb1 |> dplyr::select(
+    TreatmentUID,
+    CombID,
+    CombIDn,
+    PatientID
+  ),
+  by = "TreatmentUID"
+) |> dplyr::filter(
+  stringr::str_detect(ImplantCodes,paste(IncludeAny,collapse = "|"))
+) |> group_by(CombID) |> dplyr:: mutate(
+  CombIDIndex = row_number(DateTreatment)
+) |> ungroup()
+
+
+
+
+
+# STROBEInput1 <- STROBEInput |> dplyr::mutate(
+#   PatientID = stringr::str_split_i(TreatmentUID,"\\.",1),
+#   CombID = paste0(PatientID,AffectedSide)
+# ) |> dplyr::filter(
+#   stringr::str_detect(ImplantCodes,paste(IncludeAny,collapse = "|"))) |> 
+#     group_by(CombID) |> dplyr:: mutate(
+#   CombIDn = row_number(DateTreatment)
+# ) |> relocate(
+#     CombIDn, .after = CombID
+#   ) |> arrange(CombID) |> ungroup()
+# 
+# # |> filter(
+# #     CombIDn == 1
+# #   )
+
+```
+
 
 ```{r}
 
@@ -612,6 +647,7 @@ A dataframe was prepared to generate a flow chart of record retrieval, screening
 # Inclusion
 # - Surgical treatment
 # - With hardware of interest
+# - Index procedure (first surgery of interest)
 # After "induction"
 # - Patient withdraws consent
 # - Treatment fails before analysis date
@@ -631,6 +667,12 @@ STROBEFlow <- STROBEInput |> dplyr::filter(
     EligibleAtx12months
   ),
   by = "TreatmentUID"
+) |> left_join( #Bring in index procedure marker
+  STROBEInput1 |> dplyr::select(
+    TreatmentUID,
+    CombIDIndex # This is the count of how many treatments with the CombID once dataset filtered for Dynacord SKUs
+  ), 
+  by = "TreatmentUID"
 ) |> dplyr::mutate(
   exclusion1 = case_when(
     is.na(SurgicalTreatment) ~ "Not a surgical treatment",
@@ -639,10 +681,9 @@ STROBEFlow <- STROBEInput |> dplyr::filter(
   ),
   exclusion2 = case_when(
     is.na(exclusion1) & stringr::str_detect(RegistryStatus,"Opt-out") ~ "Patient Opt-Out",
-    is.na(exclusion1) & is.na(ImplantCodes) ~ "No hardware of interest",
-    #is.na(exclusion1) & Surgeon != "RP" ~ "Other Surgeon",
-    is.na(exclusion1) & stringr::str_detect(ImplantCodes,paste(IncludeAny,collapse = "|")) ~ NA_character_,
-    .default = "No hardware of interest"
+    is.na(exclusion1) & (is.na(ImplantCodes) | stringr::str_detect(ImplantCodes,paste(IncludeAny,collapse = "|"), negate = TRUE))  ~ "No hardware of interest",
+    is.na(exclusion1) & stringr::str_detect(ImplantCodes,paste(IncludeAny,collapse = "|")) & CombIDIndex != 1 ~ "Non-index procedure",
+    is.na(exclusion1) & stringr::str_detect(ImplantCodes,paste(IncludeAny,collapse = "|")) & CombIDIndex == 1 ~ NA_character_
   ),
   followup = if_else(
     is.na(exclusion1) & is.na(exclusion2),
@@ -671,7 +712,7 @@ The combined snapshot dataframe was filtered using the results of the STROBE flo
 #| label: slice-stack-3
 #| code-summary: "line up input frames"
 
-SelectComb <- SnapshotComb1 |> dplyr::select(
+Mastersheet <- SnapshotComb1 |> dplyr::select(
   Cohort,
   EligibleAtPreop:SignificantComorbidities_Preop,
   EligibleAtIntraop:OtherShoulderGirdle,
@@ -685,68 +726,19 @@ SelectComb <- SnapshotComb1 |> dplyr::select(
   relocate(
     Cohort, .before = EligibleAtPreop
   ) |> left_join(
-    SnapshotComb |>
-      group_by(CombID) |>
-      summarise(CombIDnAll = n()),
-    by = "CombID"
-  ) |>
-  relocate(
-    CombIDnAll, .after = CombID
-  )
-```
-
-The reduced snapshot was filtered further, to remove any non-index surgical procedures from each shoulder from the study mastersheet.
-
-```{r}
-#| label: slice-stack-4
-#| code-summary: "line up input frames"
-
-
-
-# Add a sequential label of treatment records per patient + joint in order of surgery date
-SelectComb1 <- SelectComb |> group_by(CombID) |> mutate(
-  CombIDn = row_number(DateTreatment)
-) |>
-  relocate(
-    CombIDn, .after = CombID
-  ) |> arrange(CombID) |> filter(
-    CombIDn == 1
-  )
-
-# Retrieve all treatment records for each patient + joint regardless of hardware usage
-SelectComb1a <- SnapshotComb1 |> filter(
-  CombID %in% SelectComb1$CombID
-) |> arrange(CombID)
-
-#Add a label with the number of treatments subsequent to the index procedure
-SelectComb1b <- SelectComb1a |> left_join(
-  SelectComb1 |> dplyr::select(CombID,
-                                DateTreatment),
-  by = "CombID"
-) |> filter(
-  DateTreatment.x > DateTreatment.y) |>
-  group_by(CombID) |>
-  summarise(CombIDnSub = n()
-) |>
-  ungroup() 
-
-#Finalise label with number of subsequent treatments
-Mastersheet <- SelectComb1 |> left_join(
-    SelectComb1b,
-    by = "CombID"
-  ) |> mutate(
-    CombIDnSub2 = case_when(
-    is.na(CombIDnSub) ~ 0,
-    .default = CombIDnSub
+    STROBEInput1 |> dplyr::select(
+      TreatmentUID,
+      CombIDn
     ),
-    TreatmentStatus2 = case_when(
-      stringr::str_detect(str_to_lower(TreatmentStatus),"pend") ~ "Ongoing",
-      .default = TreatmentStatus
-    ),
+    by = "TreatmentUID"
   ) |> relocate(
-    CombIDnSub2, .after = CombID
-  ) |> dplyr::select(-CombIDnSub) |> ungroup()
+    CombIDn,
+    .after = CombID
+  )
+
 ```
+
+
 
 ```{epoxy}
 
@@ -1625,7 +1617,7 @@ The diagram below summarises recruitment and categorisation of patients into the
 
 ```{r}
 #| label: fig-strobe
-#| fig-cap: "Flowchart of extraction and followup of sample from the Registry"
+#| fig-cap: "Flowchart of extraction and followup of sample from the Registry^[Non-index procedure refers to a procedure that has a preceding treatment using the hardware of interest]"
 
 STROBEPlot <- consort::consort_plot(
   data = STROBEFlow,
