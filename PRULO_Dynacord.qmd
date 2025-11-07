@@ -1094,17 +1094,13 @@ Tables were modified to track anchor usage.
 
 ```{r}
 
-ImplantTable2a <- ImplantTable2 |> mutate(
-  Suture = str_to_title(str_extract(str_to_lower(Description), "\\b\\w+cord\\b"))
-)
-
 AnchorUsage <- Mastersheet2 |> dplyr::select(
   TreatmentUID,
   ImplantCodes
 ) |> separate_longer_delim(cols = ImplantCodes,", ") |> left_join(
-  ImplantTable2a |> dplyr::select(
+  ImplantTable |> dplyr::select(
     Reference,
-    Suture
+    Category
   ),
   by = join_by("ImplantCodes" == "Reference")
 )
