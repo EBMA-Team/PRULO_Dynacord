@@ -244,7 +244,7 @@ SheetIDs <- list(
 DbSS = "https://docs.google.com/spreadsheets/d/1zyFuf0Wmij13ELTYNmdi_BprF8hU4QSCPsNZ0EYRXzo/edit",
 ImplantSS = "https://docs.google.com/spreadsheets/d/1MvT00sc8FzH5SXEi-yzEgW1H1ao3AOoakKqpg7UkxW4/edit",
 #AcctSS ="https://docs.google.com/spreadsheets/d/1zyFuf0Wmij13ELTYNmdi_BprF8hU4QSCPsNZ0EYRXzo/edit",
-SurgicalGapSS = "https://docs.google.com/spreadsheets/d/1qVGc27EEevETq3OvJsJ0UUMKhPG07H7J209ZCHN8Ww8/edit"
+StudySS = "https://docs.google.com/spreadsheets/d/1fkVvlIGL_OwsXyb62X7Yc8q47QG4iQrf0zeIES1C2og/edit" # external sheet for manual manipulation before cycling back into workflow
 )
 
 
@@ -408,15 +408,6 @@ SnapshotComb <- SnapshotRC |> dplyr::bind_rows(
 
 ```
 
-## Revision 1 - Update Feb 2025
-
-*R316 and R317*
-
-...it is difficult to understand why the available data would be so low with regards to BMI and insurance type. It would seem to this reviewer that this would be fairly straightforward data to obtain from the medical record, if not from the patient themselves.
-
-*BMI is irretrievable from the clinical records - it is stored in another system.*
-
-...it is not clear to me why the data for tear type (full versus partial), involved tendons, etc have less than complete available data.
 
 An additional export of account data was prepared and imported to the workspace using the *readr* package, as well as *tidyverse* syntax and *stringr*, to categorise text fields.
 
@@ -496,68 +487,7 @@ col_select = c(
 
 ```
 
-Additional intraoperative data was retrieved manually into a table and imported using *googlesheets.*
 
-```{r}
-#| label: retrieve-surgical
-
-# Authenticate for sheets using the same token
-gs4_auth(token = drive_token())
-
-
-SurgicalGapFill <- googlesheets4::read_sheet(
-  ss = SheetIDs$SurgicalGapSS, 
-  sheet = "Surgical", 
-  col_names = TRUE,
-  col_types = "ccccccccccccccccccccc"
-  ) |> dplyr::select(
-    !c(
-      FirstName,
-      LastName
-    )
-  )
-```
-
-Check that column names are aligned
-
-```{r}
-#| include: false
-##| echo: false
-
-SnapshotCols <- colnames(SnapshotComb)
-SurgicalCols <- colnames(SurgicalGapFill)
-
-# Find which columns from GapFilledData exist in Mastersheet2
-matching_cols <- dplyr::intersect(SnapshotCols, SurgicalCols)
-print("Columns that match between dataframes:")
-print(matching_cols)
-
-# Find columns in GapFilledData that don't exist in Mastersheet2
-missing_cols <- dplyr::setdiff(SurgicalCols, SnapshotCols)
-
- if(length(missing_cols) > 0) {
-  print("Warning: These columns in GapFilledData don't exist in Snapshot")
-  print(missing_cols)
-}
-```
-
-Upon review, one row of data was found to have a data entry error for one field (CuffTearSize) which was manually updated in the table.
-
-```{r}
-#| label: data-correction1
-
-SnapshotComb1 <- dplyr::rows_update(
-  SnapshotComb,
-  SurgicalGapFill,
-  by = "TreatmentUID"
-) |> dplyr::mutate( #Update wayward tear size input
-  CuffTearSizeAP = if_else(
-    TreatmentUID == "1789.1",
-    "20",
-    CuffTearSizeAP
-  )
-)
-```
 
 ### RECORD \[5\] - Setting
 
@@ -629,22 +559,6 @@ STROBEInput1 <- STROBEInput |> left_join(
 
 
 
-
-
-# STROBEInput1 <- STROBEInput |> dplyr::mutate(
-#   PatientID = stringr::str_split_i(TreatmentUID,"\\.",1),
-#   CombID = paste0(PatientID,AffectedSide)
-# ) |> dplyr::filter(
-#   stringr::str_detect(ImplantCodes,paste(IncludeAny,collapse = "|"))) |> 
-#     group_by(CombID) |> dplyr:: mutate(
-#   CombIDn = row_number(DateTreatment)
-# ) |> relocate(
-#     CombIDn, .after = CombID
-#   ) |> arrange(CombID) |> ungroup()
-# 
-# # |> filter(
-# #     CombIDn == 1
-# #   )
 
 ```
 
@@ -788,7 +702,111 @@ Key variables defined as part of this analysis are summarised @tbl-variables.
 
 ## Record \[8\] Data sources
 
-Data was sourced directly from the PRULO clinical registry as described in [@scholes2023].
+Data was sourced directly from the PRULO clinical registry as described in [@scholes2023].Patient and treatment information were entered into the database through the registry interface and compiled into a data cube (snapshot) every quarter. Complications and adverse events captured into an online form (QuestionPro, USA) and linked using record identifier codes.
+
+### Adverse Events
+
+The complications table was also processed for further analysis.
+
+```{r}
+#| label: complications-preparation
+# Join sufficient columns to complictable to perform calculations
+
+ComplicTable1 <- ComplicTable |> rename(
+  TreatmentUID = `Treatment ID`) |> left_join(
+    SnapshotComb1 |> dplyr::select(
+      CombID,
+      TreatmentUID,
+      DateTreatment), 
+    by = "TreatmentUID"
+  ) |> mutate(
+    ReopDelay = as.numeric(as.duration(interval(ymd(DateTreatment), ymd(`Reoperation Procedure Date`))),"weeks"),
+    OccurDelay = as.numeric(as.duration(interval(ymd(DateTreatment), `Date of Occurrence`)),"days"),
+    ComplicationNature = str_replace_all(str_to_lower(`Complication Nature`),"[;.,-]","")
+) |> mutate(
+    Intraop = case_when(
+      ReopDelay == 0 ~ "Yes",
+      str_detect(ComplicationNature,"intraop") ~ "Yes",
+      .default = "No"
+      ),
+    Strata = case_when(
+str_detect(ComplicationNature,"capsulitis|frozen|stiff|release|enthesop*") ~ "Capsulitis - Stiffness",
+str_detect(ComplicationNature,"repair|fail|recurrent|rupture|retear|torn|retorn|remov*|loose anchor*") ~"Repair Failure",
+str_detect(ComplicationNature,"persistent|infarction|palsy|pain|radiculo*|crps|complex") ~"Pain - Other",
+str_detect(ComplicationNature,"dvt") ~"Thromboembolic",
+str_detect(ComplicationNature,"washout|infect|antibiot*|abx|debrid*|washout") ~"Infection",
+str_detect(ComplicationNature,"explant*|intraop*|regraft") ~ "Explant",
+str_detect(ComplicationNature,"fract*") ~ "Fracture",
+str_detect(ComplicationNature,"brok*|snap*|break") ~ "Hardware",
+str_detect(ComplicationNature,"annoy*|irritat*") ~ "Hardware Irritation",
+str_detect(ComplicationNature,"skin|wound|rash") ~ "Wound - Skin",
+str_detect(ComplicationNature,"disloc*|instabil*") ~ "Dislocation - Instability",
+),
+  ComplicationOccurrence = case_when(
+    `Complication Occurrence` == "No" & (!is.na(ComplicationNature) & !(grepl("nil",ComplicationNature, ignore.case = TRUE))) ~ "Yes",
+    .default = `Complication Occurrence`
+  )
+) |> filter(
+  stringr::str_detect(str_to_lower(ComplicationOccurrence),"yes|possible")  & !is.na(CombID)
+)
+```
+
+
+
+
+
+```{r}
+#| label: relevant-complications
+
+
+ComplicTable2 <- ComplicTable1 |> 
+  dplyr::group_by(CombID, Strata, Intraop) |>
+  dplyr::arrange(`Date of Occurrence`) |>
+  dplyr::slice_min(`Date of Occurrence`) |>
+  dplyr::ungroup() |>
+  dplyr::filter(
+    TreatmentUID %in% Mastersheet2$TreatmentUID & (`Date of Occurrence` < ymd(CurrentDate))
+    ) |> dplyr::distinct(
+      CombID, Strata, .keep_all = TRUE
+      )
+
+
+```
+
+Complication events were graded in a separate table according to [@felsch2021] and retrieved into the workspace using *googlesheets4*.
+
+```{r}
+#| label: complic-output
+#| eval: false
+# comment out after first run
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+ googlesheets4::range_write(
+   ss = SheetIDs$StudySS,
+   data = ComplicTable2,
+   sheet = "ComplicGrade2",
+   range = "A1:P"
+ )
+```
+
+```{r}
+
+# Authenticate for sheets using the same token
+gs4_auth(token = drive_token())
+
+ComplicTable3 <- googlesheets4::range_read(
+  ss = SheetIDs$StudySS,
+  sheet = "ComplicGrade",
+  range = "A1:Q",
+  col_names = TRUE,
+  col_types = "TcccDccDcDnncccci"
+  )
+
+#Ready for table presentation
+
+```
 
 ## Record \[9\] Bias
 
@@ -999,87 +1017,7 @@ Mastersheet2 <- left_join(
 
 ```
 
-The complications table was also processed for further analysis.
 
-```{r}
-#| label: complications-preparation
-# Join sufficient columns to complictable to perform calculations
-
-ComplicTable1 <- ComplicTable |> rename(
-  TreatmentUID = `Treatment ID`) |> left_join(
-    SnapshotComb1 |> dplyr::select(
-      CombID,
-      TreatmentUID,
-      DateTreatment), 
-    by = "TreatmentUID"
-  ) |> mutate(
-    ReopDelay = as.numeric(as.duration(interval(ymd(DateTreatment), ymd(`Reoperation Procedure Date`))),"weeks"),
-    OccurDelay = as.numeric(as.duration(interval(ymd(DateTreatment), `Date of Occurrence`)),"days"),
-ComplicationNature = str_replace_all(str_to_lower(`Complication Nature`),"[;.,-]","")
-) |> mutate(
-    Intraop = case_when(
-      ReopDelay == 0 ~ "Yes",
-      str_detect(ComplicationNature,"intraop") ~ "Yes",
-      .default = "No"
-      ),
-    Strata = case_when(
-str_detect(ComplicationNature,"capsulitis|frozen|stiff|release|enthesop*") ~ "Capsulitis - Stiffness",
-str_detect(ComplicationNature,"repair|fail|recurrent|rupture|retear|torn|retorn|remov*|loose anchor*") ~"Repair Failure",
-str_detect(ComplicationNature,"persistent|infarction|palsy|pain|radiculo*|crps|complex") ~"Pain - Other",
-str_detect(ComplicationNature,"dvt") ~"Thromboembolic",
-str_detect(ComplicationNature,"washout|infect|antibiot*|abx|debrid*|washout") ~"Infection",
-str_detect(ComplicationNature,"explant*|intraop*|regraft") ~ "Explant",
-str_detect(ComplicationNature,"fract*") ~ "Fracture",
-str_detect(ComplicationNature,"brok*|snap*|break") ~ "Hardware",
-str_detect(ComplicationNature,"annoy*|irritat*") ~ "Hardware Irritation",
-str_detect(ComplicationNature,"skin|wound|rash") ~ "Wound - Skin",
-str_detect(ComplicationNature,"disloc*|instabil*") ~ "Dislocation - Instability",
-),
-  ComplicationOccurrence = case_when(
-    `Complication Occurrence` == "No" & (!is.na(ComplicationNature) & !(grepl("nil",ComplicationNature, ignore.case = TRUE))) ~ "Yes",
-    .default = `Complication Occurrence`
-  )
-) |> filter(
-  stringr::str_detect(str_to_lower(ComplicationOccurrence),"yes|possible", negate = TRUE)  & !is.na(CombID)
-)
-```
-
-```{r}
-#| label: relevant-complications
-
-
-ComplicTable2 <- ComplicTable1 |> 
-  dplyr::group_by(CombID, Strata, Intraop) |>
-  dplyr::arrange(`Date of Occurrence`) |>
-  dplyr::slice_min(`Date of Occurrence`) |>
-  dplyr::ungroup() |>
-  dplyr::filter(
-    TreatmentUID %in% Mastersheet2$TreatmentUID & (Timestamp < ymd(CurrentDate))
-    )|> dplyr::distinct(
-      CombID, Strata, .keep_all = TRUE
-      )
-
-
-```
-
-Complication events were graded in a separate table according to [@felsch2021] and retrieved into the workspace using *googlesheets4*.
-
-```{r}
-
-# Authenticate for sheets using the same token
-gs4_auth(token = drive_token())
-
-ComplicTable3 <- googlesheets4::range_read(
-  ss = SheetIDs$SurgicalGapSS,
-  sheet = "Complications",
-  range = "A1:Q",
-  col_names = TRUE,
-  col_types = "TcccDccDcDnncccci"
-  )
-
-#Ready for table presentation
-
-```
 
 Tables were rearranged with *tidyverse* to prepare patient-reported outcomes (PROMs) for analysis in the *long* format. Separate dataframes were created for the QuickDASH and the WORC, as the QuickDASH was collected at 3months and the WORC was not.
 
