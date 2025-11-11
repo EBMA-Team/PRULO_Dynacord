@@ -85,6 +85,8 @@ Packages were loaded initially with *pacman* package. Citations were applied to 
 
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(
+  "ggsurvfit",
+  "tidytext",
   "dplyr",
   "flextable",
   "litedown",
@@ -218,6 +220,29 @@ get_specific_snapshot <- function(folder_name, base_folder_id = base_folder_id1)
 }
 ```
 
+
+```{r}
+
+ReplaceTermFun <- function(String) {
+  # Function must handle vectors - process each element
+  map_chr(String, function(s) {
+    # Find the matched term in TargetTerms2
+    match <- filter(TargetTerms2, s == Term)
+    
+    # Check if a match is found
+    if (nrow(match) == 1) {
+      return(match$ReplaceTerm)
+    } else {
+      # Return the original string if no match is found
+      return(s)
+    }
+  })
+}
+
+```
+
+
+
 ## Analysis Aim
 
 To describe the clinical and patient-reported outcomes, in patients presenting for surgical review of shoulder pathology and electing to undergo reconstruction or repair of soft-tissue structures with a biodegradable anchor (Healix Advance BR, Depuy-Mitek, USA), at a private, regional orthopaedic clinic between 2020 - 2024.
@@ -261,16 +286,24 @@ gs4_auth(token = drive_token())
 
 ComplicTable <- googlesheets4::read_sheet(
   ss = SheetIDs$DbSS,
-  sheet = "Complications", 
+  sheet = "Complications",
+  col_names = TRUE,
+  col_types = "TcccDccD"
+  )
+
+IntraComplic <- googlesheets4::range_read(
+  ss = SheetIDs$DbSS,
+  range = "A3:AQ",
+  sheet = "IntraComplications", 
   col_names = TRUE, 
-  col_types = "tcccDccD"
+  col_types = "ccccliicicccccccccccccccciccccccccccccccccc"
   )
 
 ImplantTable <- googlesheets4::range_read(
   ss = SheetIDs$ImplantSS,
-  sheet = "Dynacord", 
+  sheet = "Dynacord",
   range = "F1:I",
-  col_names = TRUE, 
+  col_names = TRUE,
   col_types = "nccc"
   )
 
@@ -285,9 +318,9 @@ ImplantTable <- googlesheets4::range_read(
 #To match to acctData
 PatientTable <- googlesheets4::range_read(
   ss = SheetIDs$DbSS,
-  sheet = "Patient", 
+  sheet = "Patient",
   range = "A10:N",
-  col_names = FALSE, 
+  col_names = FALSE,
   col_types = "DccccDcccDcicc"
   )
 
@@ -295,17 +328,17 @@ PatientTable <- googlesheets4::range_read(
 Patient_Col <- c(
   "PatientCreationDate",
   "PatientID",
-  "LastName",	
-  "FirstName",	
-  "AlternateID",	
-  "DateOfBirth",	
-  "Sex",	
-  "RegistryStatus",	
-  "RegistryStatusNotes",	
-  "DateRegistryStatus",	
-  "NotificationMethod",	
-  "NoTreatmentRecords",	
-  "Email",	
+  "LastName",
+  "FirstName",
+  "AlternateID",
+  "DateOfBirth",
+  "Sex",
+  "RegistryStatus",
+  "RegistryStatusNotes",
+  "DateRegistryStatus",
+  "NotificationMethod",
+  "NoTreatmentRecords",
+  "Email",
   "Phone"
 )
 
@@ -408,7 +441,6 @@ SnapshotComb <- SnapshotRC |> dplyr::bind_rows(
 
 ```
 
-
 An additional export of account data was prepared and imported to the workspace using the *readr* package, as well as *tidyverse* syntax and *stringr*, to categorise text fields.
 
 ```{r}
@@ -487,15 +519,13 @@ col_select = c(
 
 ```
 
-
-
 ### RECORD \[5\] - Setting
 
 The PRULO registry is based in a regional private practice for upper limb orthopaedics [@scholes2023].
 
 ```{epoxy}
 
-The registry has {nrow(SnapshotComb1)} treatment records with the first patient enrolled {format(min(SnapshotComb1$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")} and the final treatment record created {format(max(SnapshotComb1$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")}.The registry snapshot was extracted on {format(ymd("20240331"), format = "%d %B %Y")}. Patients are followed for up to 2 years after surgery to capture treatment outcomes and patient-reported outcome measures (PROMs). 
+The registry has {nrow(SnapshotComb)} treatment records with the first patient enrolled {format(min(SnapshotComb$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")} and the final treatment record created {format(max(SnapshotComb$DateTreatmentRecordCreation, na.rm = TRUE), format = "%d %B %Y")}.The registry snapshot was extracted on {format(ymd("20240331"), format = "%d %B %Y")}. Patients are followed for up to 2 years after surgery to capture treatment outcomes and patient-reported outcome measures (PROMs). 
 
 ```
 
@@ -516,8 +546,6 @@ Inclusion criteria;
 -   Treatment record is eligible for surgery (it has occurred)
 
 Data manipulation (add columns and filter tables based on column values) was performed with *tidyverse* and converted to display format using *gt*.
-
-
 
 ```{r}
 #| label: tbl-implants
@@ -544,7 +572,7 @@ A dataframe was prepared to generate a flow chart of record retrieval, screening
 IncludeAny = paste(ImplantTable$Reference,sep = "|")
 
 STROBEInput1 <- STROBEInput |> left_join(
-  SnapshotComb1 |> dplyr::select(
+  SnapshotComb |> dplyr::select(
     TreatmentUID,
     CombID,
     CombIDn,
@@ -561,7 +589,6 @@ STROBEInput1 <- STROBEInput |> left_join(
 
 
 ```
-
 
 ```{r}
 
@@ -583,7 +610,7 @@ CurrentDate <- as.character("20240331")
 STROBEFlow <- STROBEInput |> dplyr::filter(
   !is.na(TreatmentUID)
 ) |> dplyr::left_join(
-  SnapshotComb1 |> dplyr::select(
+  SnapshotComb |> dplyr::select(
     TreatmentUID,
     CombID,
     DateInitialExamination,
@@ -636,15 +663,14 @@ The combined snapshot dataframe was filtered using the results of the STROBE flo
 #| label: slice-stack-3
 #| code-summary: "line up input frames"
 
-Mastersheet <- SnapshotComb1 |> dplyr::select(
+Mastersheet <- SnapshotComb |> dplyr::select(
   Cohort,
   EligibleAtPreop:SignificantComorbidities_Preop,
   EligibleAtIntraop:OtherShoulderGirdle,
   starts_with("QDASH_TotalScore"),
   starts_with("EligibleAt"), 
-  starts_with("WORC"),
-  ComplicationOccurrence) |> 
-  filter(
+  starts_with("WORC")
+  ) |> filter(
     TreatmentUID %in% STROBEFlow$followup
   ) |> 
   relocate(
@@ -661,8 +687,6 @@ Mastersheet <- SnapshotComb1 |> dplyr::select(
   )
 
 ```
-
-
 
 ```{epoxy}
 
@@ -704,74 +728,394 @@ Key variables defined as part of this analysis are summarised @tbl-variables.
 
 Data was sourced directly from the PRULO clinical registry as described in [@scholes2023].Patient and treatment information were entered into the database through the registry interface and compiled into a data cube (snapshot) every quarter. Complications and adverse events captured into an online form (QuestionPro, USA) and linked using record identifier codes.
 
-### Adverse Events
+#### Adverse Events
 
-The complications table was also processed for further analysis.
+The complications tables (intraop and postop) were also processed for further analysis.
 
 ```{r}
 #| label: complications-preparation
 # Join sufficient columns to complictable to perform calculations
 
-ComplicTable1 <- ComplicTable |> rename(
-  TreatmentUID = `Treatment ID`) |> left_join(
-    SnapshotComb1 |> dplyr::select(
+ComplicTable1 <- ComplicTable |> rename_with(
+  ~ (gsub(" ", "", .x))
+  ) |> rename(
+ TreatmentUID = "TreatmentID") |> left_join(
+    SnapshotComb |> dplyr::select(
       CombID,
       TreatmentUID,
-      DateTreatment), 
+      DateTreatment),
     by = "TreatmentUID"
   ) |> mutate(
-    ReopDelay = as.numeric(as.duration(interval(ymd(DateTreatment), ymd(`Reoperation Procedure Date`))),"weeks"),
-    OccurDelay = as.numeric(as.duration(interval(ymd(DateTreatment), `Date of Occurrence`)),"days"),
-    ComplicationNature = str_replace_all(str_to_lower(`Complication Nature`),"[;.,-]","")
-) |> mutate(
+    ReopDelay = as.numeric(as.duration(interval(ymd(DateTreatment), ymd(ReoperationProcedureDate))),"weeks"),
+    OccurDelay = as.numeric(as.duration(interval(ymd(DateTreatment), DateofOccurrence)),"weeks"),
+    ComplicationNature = str_replace_all(str_to_lower(ComplicationNature),"[;.,-]",""),
     Intraop = case_when(
       ReopDelay == 0 ~ "Yes",
       str_detect(ComplicationNature,"intraop") ~ "Yes",
       .default = "No"
       ),
-    Strata = case_when(
-str_detect(ComplicationNature,"capsulitis|frozen|stiff|release|enthesop*") ~ "Capsulitis - Stiffness",
-str_detect(ComplicationNature,"repair|fail|recurrent|rupture|retear|torn|retorn|remov*|loose anchor*") ~"Repair Failure",
-str_detect(ComplicationNature,"persistent|infarction|palsy|pain|radiculo*|crps|complex") ~"Pain - Other",
-str_detect(ComplicationNature,"dvt") ~"Thromboembolic",
-str_detect(ComplicationNature,"washout|infect|antibiot*|abx|debrid*|washout") ~"Infection",
-str_detect(ComplicationNature,"explant*|intraop*|regraft") ~ "Explant",
-str_detect(ComplicationNature,"fract*") ~ "Fracture",
-str_detect(ComplicationNature,"brok*|snap*|break") ~ "Hardware",
-str_detect(ComplicationNature,"annoy*|irritat*") ~ "Hardware Irritation",
-str_detect(ComplicationNature,"skin|wound|rash") ~ "Wound - Skin",
-str_detect(ComplicationNature,"disloc*|instabil*") ~ "Dislocation - Instability",
-),
-  ComplicationOccurrence = case_when(
-    `Complication Occurrence` == "No" & (!is.na(ComplicationNature) & !(grepl("nil",ComplicationNature, ignore.case = TRUE))) ~ "Yes",
-    .default = `Complication Occurrence`
+  ComplicationOccurrence2 = case_when(
+    str_detect(str_to_lower(ComplicationOccurrence),"possible|yes") ~ "Yes",
+    ComplicationOccurrence == "No" & !is.na(ComplicationNature) & str_detect(ComplicationNature,"nil", negate = TRUE) ~ "Yes",
+    .default = ComplicationOccurrence
   )
 ) |> filter(
   stringr::str_detect(str_to_lower(ComplicationOccurrence),"yes|possible")  & !is.na(CombID)
 )
+
+
+```
+
+Intraoperative events were prepared to append to the Complications Table for further analysis.
+
+```{r}
+
+IntraComp1 <- IntraComplic |> rename_with(
+  ~ (gsub(" ", "", .x))
+  ) |> filter(
+    ICCount > 0
+  ) |> dplyr::select(
+    TreatmentID,
+    ICNature1:ICIntervention1Technique # there is one case with two complications listed, skipped for now
+  ) |> rename(
+    TreatmentUID = "TreatmentID"
+  ) |> mutate(
+    ComplicationID = stringr::str_c(TreatmentUID,".","01"),
+    OccurDelay = 0,
+    ComplicationOccurrence2 = "Yes",
+    Intraop = "Yes"
+  ) |> left_join(
+    SnapshotComb |> dplyr::select(
+      TreatmentUID,
+      CombID,
+      DateTreatment
+    ),
+    by = "TreatmentUID"
+  ) |> rename(
+    DateofOccurrence = "DateTreatment",
+    ComplicationNature = "ICNature1"
+  ) |> filter(
+    TreatmentUID %in% Mastersheet$TreatmentUID
+  )
+
 ```
 
 
 
+Reoperations were identified and subsetted to append to the Complications Table for survival analysis.
+
+```{r}
+
+
+ComplicReop <- ComplicTable1 |> filter(
+  ReoperationProcedure == "Yes"
+) |> dplyr::select(
+  !(c(
+    OccurDelay,
+    DateofOccurrence,
+    ComplicationNature
+  ))
+) |> rename(
+  DateofOccurrence = "ReoperationProcedureDate",
+  OccurDelay = "ReopDelay"
+) |> mutate(
+  ComplicationNature = "Reoperation",
+  ComplicationOccurrence2 = "Yes",
+  Intraop = "No"
+)   # need to add patientID to this table?
+
+
+```
 
 
 ```{r}
-#| label: relevant-complications
 
-
-ComplicTable2 <- ComplicTable1 |> 
-  dplyr::group_by(CombID, Strata, Intraop) |>
-  dplyr::arrange(`Date of Occurrence`) |>
-  dplyr::slice_min(`Date of Occurrence`) |>
-  dplyr::ungroup() |>
-  dplyr::filter(
-    TreatmentUID %in% Mastersheet2$TreatmentUID & (`Date of Occurrence` < ymd(CurrentDate))
-    ) |> dplyr::distinct(
-      CombID, Strata, .keep_all = TRUE
-      )
+ComplicTable2 <- ComplicTable1 |> bind_rows(
+  ComplicReop |> dplyr::select(
+    CombID,
+    ComplicationID,
+    TreatmentUID,
+    ComplicationOccurrence2,
+    ComplicationNature,
+    DateofOccurrence,
+    OccurDelay,
+    DateTreatment,
+    Intraop
+  ),
+  IntraComp1 |> dplyr::select(
+    CombID,
+    ComplicationID,
+    TreatmentUID,
+    ComplicationOccurrence2,
+    ComplicationNature,
+    DateofOccurrence,
+    OccurDelay,
+    Intraop
+  )
+) |> dplyr::filter(
+    TreatmentUID %in% Mastersheet2$TreatmentUID & (DateofOccurrence < ymd(CurrentDate))
+    )
 
 
 ```
+
+
+  
+  
+
+Complication entries were written to an external file for co-author review.
+
+```{r}
+
+googlesheets4::range_write(
+  ss = SheetIDs$StudySS,
+  data = ComplicTable2 |> dplyr::select(
+    ComplicationID,
+    TreatmentUID,
+    CombID,
+    DateTreatment,
+    DateofOccurrence,
+    ComplicationNature,
+    ReoperationProcedure,
+    ReoperationProcedureDate,
+    ReopDelay,
+    OccurDelay
+    ),
+  sheet = "Complications2",
+  range = "A1:K",
+  col_names = TRUE) 
+
+
+```
+
+The free-text describing the nature of the complication or adverse event was pre-processed using *tidytext* (v`{r} utils::packageVersion("tidytext")`) [@tidytext] to split into word tokens and remove stop words.
+
+```{r}
+Stop <- tibble(get_stopwords())
+
+ComplicTable3 <- tidytext::unnest_tokens(
+  ComplicTable2,
+  output = Term,
+  input = ComplicationNature,
+  token = "words",
+  format = "text",
+  to_lower = TRUE,
+  drop = FALSE
+) |> anti_join(
+  Stop,
+  by = c("Term" = "word")
+) |> mutate(
+  TermLength = stringr::str_length(Term)
+)
+
+```
+
+Terms with less than five characters were extracted and reproduced in an external file for manual spelling of abbreviations. Terms with digits (e.g. L5) were removed.
+
+```{r}
+# Retrieve terms less than 4 characters that likely need to be recast into full words
+
+TargetTerms <- ComplicTable3 |> dplyr::select(
+  ComplicationID,
+  Term
+  ) |> distinct(
+  Term,
+  .keep_all = TRUE
+  ) |> mutate(
+    TermLength = stringr::str_length(Term)
+    ) |> filter(
+     TermLength < 5 & stringr::str_detect(Term,"\\d",negate = TRUE)
+  ) |> arrange(
+    Term
+  )
+
+#Commented out after first use
+googlesheets4::range_write(
+ss= SheetIDs$StudySS,
+data = TargetTerms |> dplyr::select(
+  ComplicationID,
+  Term
+),
+sheet = "ComplicTerm2",
+range = paste0("A1:","B",nrow(TargetTerms)+1),
+col_names = TRUE
+
+)
+```
+
+The abbreviated terms with expanded definitions were read back into the workspace for replacement in the complication descriptions.
+
+```{r}
+# read in new terms
+
+TargetTerms2 <- googlesheets4::range_read(
+  ss= SheetIDs$StudySS,
+  sheet = "ComplicTerm2",
+  range = "A1:C",
+  col_names = TRUE,
+  trim_ws = TRUE
+) |> mutate(
+  TargetTerm = paste0("\\b",Term,"\\b")
+)
+
+```
+
+The terms were replaced and added to the dataframe containing complication data.
+
+```{r}
+
+TargetTermsList <- str_c(TargetTerms2$TargetTerm, collapse = "|")
+
+ComplicTable4 <- ComplicTable3 |> 
+  mutate(
+    Term1 = case_when(
+      str_detect(Term, "\\d", negate = TRUE) ~ str_replace_all(Term, TargetTermsList, ReplaceTermFun),
+      .default = Term
+    )
+  ) |> filter(
+    str_detect(Term1, "\\d", negate = TRUE)
+  ) |> tidytext::unnest_tokens(
+  output = Term2,
+  input = Term1,
+  token = "words",
+  format = "text",
+  to_lower = TRUE,
+  drop = FALSE
+) |> anti_join(
+  Stop,
+  by = c("Term2" = "word")
+) |> mutate(
+  TermLength = stringr::str_length(Term2)
+)
+
+
+```
+
+A figure displaying term frequency was generated using *ggplot2* (v`{r} utils::packageVersion("ggplot2")`) [@ggplot2] and formatted for reporting using (v`{r} utils::packageVersion("knitr")`) [@knitr].
+
+```{r}
+Figure1 <- ComplicTable4 |>
+  count(Term2, sort = TRUE) |>
+  filter(n > 5) |>
+  mutate(Term2 = reorder(Term2, n)) |>
+  ggplot(aes(n, Term2)) +
+  geom_col() +
+  labs(y = NULL)
+
+
+knitr::knit_print(Figure1)
+```
+
+A wordcloud was generated using *wordcloud* (v`{r} utils::packageVersion("wordcloud")`) [@wordcloud] to express the most common terms in the complication description free text field.
+
+```{r}
+#| label: fig-wordcloud
+#| fig-caption: "Word cloud of top 50 terms in the complication description data entry"
+
+Figure2 <- ComplicTable4 |>
+  count(Term2) |>
+  with(wordcloud::wordcloud(Term2, n, max.words = 50))
+
+knitr::knit_print(Figure2)
+```
+
+```{r}
+
+ComplicTable5 <- left_join(
+  ComplicTable2,
+  ComplicTable4 |> group_by(
+    ComplicationID
+  ) |> summarise(
+    Term3 = str_c(Term2, collapse = " ")
+  ) |> ungroup(),
+  by = "ComplicationID"
+  ) |> mutate(
+    #Ditch reoperation term from Term as it doubles up the cases when binding the tables together and conducting the regex to identify reoperation cases; also removed Healix as a term as it overlaps with "heal" to pick up fail to heal cases
+  Term4 = case_when(
+    ComplicationNature == "Reoperation" ~ "Reoperation",
+    .default = str_replace_all(Term3,"reoperation|healix","")
+  ),
+Infection = case_when(
+    stringr::str_detect(Term4,"sepsis|sinus|washout|infect*|antibiotic*|vac.*dress*|culture|cellulitis|staphylococcus|acnes") ~ "Infection", #added "culture" as term for Infection
+    .default = "No",
+  ),
+  ImplantRemoval = case_when(
+    stringr::str_detect(Term4,"explant|remov*") & OccurDelay > 0 ~ "ImplantRemoval",
+    stringr::str_detect(Term4,"explant|remov*") & OccurDelay == 0 ~ "Explant",
+    .default = "No",
+  ),
+RepairFailure = case_when(
+    stringr::str_detect(Term4,"(repair fail*)|fail.*repair|recur*|rupture|retear|torn|retorn|heal") ~ "RepairFailure",
+    .default = "No",
+  ),
+Loosening = case_when(
+   stringr::str_detect(Term4,"loose*") ~ "Loosening",
+    .default = "No"
+    ),
+Capsulitis = case_when(
+    stringr::str_detect(Term4,"adhes*|capsul*|hydrodil*|froz*|stiff*|restrict*|range.*motion") ~ "Capsulitis",
+    .default = "No"
+  ),
+Neurological = case_when(
+    stringr::str_detect(Term4,"nerve|palsy|radiculo*") ~ "Neurological",
+    .default = "No"
+  ),
+Hardware = case_when(
+    stringr::str_detect(Term4,"brok*|snap*|break") ~ "Hardware",
+    .default = "No"
+  ),
+HardwareIrritation = case_when(
+    stringr::str_detect(Term4,"annoy*|irritat|promine*") ~ "Hardware Irritation",
+    .default = "No"
+  ),
+PainOther = case_when(
+  str_detect(Term4,"persistent|infarction|pain|complex") ~ "Pain - Other",
+    .default = "No"
+),
+Explant = case_when(
+  str_detect(Term4,"explant*|intraop*|regraft") ~ "Explant",
+  .default = "No"
+ ),
+  Fracture = case_when(
+    stringr::str_detect(Term4,"fract*") ~ "Fracture",
+    .default = "No"
+  ),
+Wound = case_when(
+    stringr::str_detect(Term4,"(wound|flap|absce*|stitch|ooze|skin|rash)") & Infection == "No" ~ "Wound-Skin",
+    .default = "No"
+  ),
+Thrombosis = case_when(
+    stringr::str_detect(Term4,"vein|thromb*|embo*|occlus*") ~ "Thrombosis",
+    .default = "No"
+  ),
+  PatientID = stringr::str_split_i(TreatmentUID,"\\.",1)
+)
+
+```
+
+
+```{r}
+
+MastersheetFail <- Mastersheet |> filter(
+  TreatmentStatus == "Failed"
+) |> dplyr::select(
+  -ComplicationOccurrence
+) |> left_join(
+  ComplicTable5 |> dplyr::select(
+    TreatmentUID,
+    ComplicationOccurrence2
+  ),
+  by = "TreatmentUID"
+) |> distinct(
+  TreatmentUID,
+  .keep_all = TRUE
+)
+```
+
+
+#### Adverse Events Grading
+
+
 
 Complication events were graded in a separate table according to [@felsch2021] and retrieved into the workspace using *googlesheets4*.
 
@@ -785,9 +1129,19 @@ gs4_auth(token = drive_token())
 
  googlesheets4::range_write(
    ss = SheetIDs$StudySS,
-   data = ComplicTable2,
+   data = ComplicTable5 |> filter(
+    ComplicationNature != "Reoperation"
+   ) |> dplyr::select(
+     TreatmentUID,
+     ComplicationID,
+     ComplicationNature,
+     OccurDelay,
+     Reoperation,
+     ReopDelay,
+     Term4:Thrombosis
+   ),
    sheet = "ComplicGrade2",
-   range = "A1:P"
+   range = "A1:O"
  )
 ```
 
@@ -796,17 +1150,203 @@ gs4_auth(token = drive_token())
 # Authenticate for sheets using the same token
 gs4_auth(token = drive_token())
 
-ComplicTable3 <- googlesheets4::range_read(
+ComplicGraded <- googlesheets4::range_read(
   ss = SheetIDs$StudySS,
-  sheet = "ComplicGrade",
-  range = "A1:Q",
+  sheet = "ComplicGrade2",
+  range = "P1:Q",
   col_names = TRUE,
-  col_types = "TcccDccDcDnncccci"
+  col_types = "ic"
   )
 
 #Ready for table presentation
 
 ```
+
+The dataset was reshaped to a long format and the indicator columns for each adverse event type were combined into one column within the dataframe (*Category*).
+
+The date of surgery for the index procedure was linked to each complication entry and subsequent quantitative variables such as the durations between;
+
+-   date of surgery (index procedure) and date of occurrence
+
+-   date of occurrence and date of reoperation
+
+-   date of surgery (index procedure) and date of reoperation
+
+Whether the event was intraoperative or presented postoperatively was also flagged within the table.
+
+```{r}
+
+ComplicTable6 <- ComplicTable5 |> dplyr::select(!(c(
+  ReopDelay,
+  OccurDelay))
+  ) |> pivot_longer(
+  cols = Infection:Thrombosis,
+  cols_vary = "slowest",
+  names_to = "Category_Name",
+  values_to = "Category_Value",
+  values_drop_na = FALSE
+) |> filter(
+  !(Category_Value == "No"),
+  DateofOccurrence <= ymd(CurrentDate),
+  !((ComplicationID == "1539.2.3" & Category_Value == "ImplantRemoval") | (ComplicationID == "1539.2.2" & Category_Value == "Hardware") | (ComplicationID == "164.1.2" & Category_Value == "Capsulitis"))
+) |> distinct( #duplicate entries for the same patient(Treatment)
+  pick(CombID,
+  DateofOccurrence,
+  Category_Value
+  ),
+  .keep_all = TRUE
+) |> mutate(
+  PatientID = stringr::str_split_i(TreatmentUID,"\\.",1)
+)
+```
+
+Records with no complication recorded, as well as the final period of right-censor for each record that did not undergo removal of surgery hardware at the end of the chart review period (censored) were generated and added to the complication table to enable reorganisation into a format appropriate for the analysis selected.
+
+```{r}
+
+MasterEnd <- ComplicTable6 |> filter(
+  Category_Value == "ImplantRemoval"
+)
+
+EndDiscrep <- MasterEnd |> filter(
+  !(TreatmentUID %in% MastersheetFail$TreatmentUID)
+)
+
+MasterDiscrep <- Mastersheet |> filter(
+  TreatmentUID == "439.2"
+)
+
+```
+
+```{r}
+
+MastersheetCensor <- Mastersheet |> filter(
+  !(TreatmentUID %in% ComplicTable6$TreatmentUID)
+) |> dplyr::select(
+  PatientID,
+  TreatmentUID,
+  CombID,
+  DateTreatment
+) |> mutate(
+  ComplicationOccurrence2 = "No",
+  ) |> bind_rows(
+   ComplicTable6 |> dplyr::select(
+    PatientID,
+    TreatmentUID,
+    CombID,
+    DateTreatment,
+    DateofOccurrence
+  )
+  ) |> distinct(
+    CombID,
+    .keep_all = TRUE
+  ) |> filter(
+    !(CombID %in% MasterEnd$CombID),
+    !(CombID %in% MastersheetFail$CombID)
+  ) |> mutate(
+    DateofOccurrence = ymd(CurrentDate),
+  Category_Value = "Censored"
+)
+
+
+```
+
+Censored treatment records (with no complication recorded at all) were combined with records that were censored after one or more complication events to form the *Censored* component of the adverse events dataset.
+
+The censored data records were integrated into the dataset, with the resultant new frame reorganised into a format appropriate for a multi-state model (see RECORD 12.5) of procedure survival after use of the suture of interest, as described in the *survival* package (v`{r} utils::packageVersion("survival")`) [@survival].
+
+A *duration* variable was calculated to arrange the dataframe rows within each PatientID in descending order of occurrence to establish the transition patterns from one health state to the next. The start and stop times for certain events (mortality, amputation) were offset by one *week* to remove ties for recurrent events or different event types occurring on the same date for the same patient.The presence of each adverse event type were restricted to the first occurrence of each Category within a patient subsequent to an index procedure per date of occurrence.
+
+```{r}
+
+ComplicMaster <- bind_rows(
+  ComplicTable6,
+  MastersheetCensor
+) |> mutate(
+  Category = fct(
+    Category_Value,
+    levels = c(
+      "Censored",
+      "Explant",
+      "Capsulitis",
+      "RepairFailure",
+      "Reoperation",
+      "ImplantRemoval",
+      "Infection",
+      "Thrombosis",
+      "Loosening",
+      "Neurological",
+      "Pain - Other"
+      )
+  )
+) |> group_by(
+    CombID
+  ) |> arrange(
+    by_group = TRUE,
+    DateofOccurrence
+  ) |> ungroup() |> filter( # remove reoperations that occur with end states
+    Category_Value != "Reoperation",
+    !(CombID %in% MasterEnd$CombID | (CombID %in% MastersheetFail$CombID))
+  ) |> mutate(
+    DateofOccurrence1 = case_when(
+      Category_Value == "RepairFailure" | Category_Value == "ImplantRemoval" | Category_Value == "Reoperation" ~ DateofOccurrence + lubridate::days(3),
+      .default = DateofOccurrence
+    )
+  ) |> relocate(
+    DateofOccurrence1, .after = DateofOccurrence
+  ) |> slice_min( # take first occurrence of each category per Patient
+  by = c(
+    CombID,
+    Category_Value),
+  DateofOccurrence,
+  n = 1
+  ) |> group_by(
+    CombID
+  ) |> mutate(
+    Duration = case_when(
+    Category != "Censored" ~ as.numeric(as.duration(interval(ymd(DateTreatment), ymd(DateofOccurrence1))),"weeks"),
+    Category == "Censored" ~ as.numeric(as.duration(interval(ymd(DateTreatment), ymd(CurrentDate))),"weeks"),
+    )
+  ) |> arrange(
+    CombID,
+    Duration,
+    .by_group = TRUE
+  ) |> mutate(
+    RowNum = row_number()
+  )  |> mutate(
+  DurationStart = case_when(
+    RowNum > 1 ~ dplyr::lag(Duration),
+    .default = 0
+  )
+  ) |> mutate(
+    DurationDiff = as.numeric(Duration-DurationStart)
+  ) |> rename(
+    DurationStop = "Duration"
+  ) |> relocate(
+    DurationStop, .after = DurationDiff
+  ) |> mutate(
+    DurationStop1 = case_when(
+      DurationDiff == 0 ~ DurationStop + 0.17,
+      .default = DurationStop
+      )
+    ) |> mutate(
+  DurationStart1 = case_when(
+    RowNum > 1 ~ dplyr::lag(DurationStop1),
+    .default = 0
+    )
+  ) |> relocate(
+    DurationStop1, .after = DurationStart1
+  ) |> dplyr::select(
+    ComplicationID,
+    CombID,
+    DurationStart1,
+    DurationStop1,
+    Category,
+    RowNum
+  )
+
+```
+
 
 ## Record \[9\] Bias
 
@@ -1017,8 +1557,6 @@ Mastersheet2 <- left_join(
 
 ```
 
-
-
 Tables were rearranged with *tidyverse* to prepare patient-reported outcomes (PROMs) for analysis in the *long* format. Separate dataframes were created for the QuickDASH and the WORC, as the QuickDASH was collected at 3months and the WORC was not.
 
 ```{r}
@@ -1077,6 +1615,16 @@ The registry system represents all cases presenting to the rooms of a surgical g
 Complication descriptions were pre-processed to remove relational terms (stopwords) and expand abbreviations to improve clarity.
 
 Dates of events (preceding and subsequent surgical records; adverse events including mortality) relative to index surgery date were assessed using coded checks to flag anomalies and were resolved by further manual review to resolve inconsistencies or discrepancies with the chart review input data stored in the registry database.
+
+Diagnosis and complication description free text fields were pre-processed to remove relational terms (stopwords) and expand abbreviations to improve clarity.
+
+The dataset used as input for the survival analysis of adverse outcomes was assessed survival analysis, with visual assessment of the transitions table to ensure procedure endstates (mortality, implant removal) did not have subsequent states and that the numbers of events and unique identifiers matched the numbers in the dataframe.
+
+```{r}
+SurvCheck <- survival::survcheck(Surv(DurationStart1, DurationStop1, Category) ~1, ComplicMaster, id=CombID) 
+
+knitr::knit_print(SurvCheck)
+```
 
 ### Record \[12.3\] Data linkage
 
@@ -1545,13 +2093,100 @@ WORCImputed <- mice::mice(
 plot(WORCImputed)
 ```
 
+# RECORD \[12.5\] Analysis
+
+A flow chart was created with the *consort* package (v`{r} utils::packageVersion("consort")`) [@consort] to describe the inclusion and exclusion of records into the sample pool for the present analysis to be drawn from. Patient demographics, pathology characteristics and surgical details were summarised using *gtsummary* (v`{r} utils::packageVersion("gtsummary")`) [@gtsummary]. Alpha was set for all significance tests at 5%, with confidence intervals of 95% used to bound point estimates for central tendency and model coefficients.
+
+## Adverse Events
+
+The analysis of adverse events and treatment/patient survival after arthroplasty remains a challenging endeavour, made more so by the complexities of ortho-oncology. Attempts have been made to standardize reporting of adverse outcomes after rotator cuff surgery \[citations\]. However, a key challenge of reporting incidence rates of these outcomes in a given sample is the variability in follow up from one patient to another in the same analytical sample. With variation in follow up, the uni-dimensional estimate of incidence (number with condition/total available sample) leads to considerable underestimation of the true rate, since some cases have not yet reached sufficient follow up to experience the event of interest. For this reason time-to-event (survival) analysis provides superior incidence estimates - however, there are additional aspects of the present analysis that preclude the use of traditional Kaplan-Meier analysis.
+
+The first is that each patient can experience multiple adverse events after the index procedure (recurring events) which adds a element of dependency to the structure of the adverse event data [@thenmozhi2019], which is not accounted for in a KM curve. The second is that certain events (e.g. implant removal) preclude the appearance of subsequent adverse events. When these records are subsequently censored (removed from the pool available records) it can bias estimates of other events of interest upward to impossible values [@Coemans2022]. In the present dataset, where these elements exist simultaneously, traditional (simplistic) methods can lead to analytical decisions that remove a considerable amount of information from the dataset (e.g. analysis of first occurrence of any type) or biased estimates.
+
+To address these issues within the analysis, the *survival* and *tidycmprsk* (v`{r} utils::packageVersion("tidycmprsk")`) [@tidycmprsk] packages were utilised to deploy a multi-state survival model (see Table 2) to estimate time-varying incidences of competing events such as;
+
+-   Implant removal (competing)
+
+-   Tendon retear \| Hardware breakage
+
+-   Infection
+
+-   Adhesive capsulitis
+
+-   Dislocation - Instability
+
+-   Other events
+
+The survival model was expressed in the form;
+
+```{r}
+#| label: surv-model
+#| echo: true
+
+CRModelRCR <- survfit2(Surv(DurationStart1, DurationStop1, Category) ~ 1, 
+                         data = ComplicMaster, 
+                         id = CombID
+                         )
+
+
+```
+
+```{r}
+SummaryRCR <- summary(CRModelRCR,
+                  times = c(
+                    4,
+                    14,
+                    38,
+                    52,
+                    104,
+                    156
+                  )
+                  )
+
+
+```
+
+```{r}
+# Subset relevant information from Table1
+SubsetRCR <- SummaryRCR[c("time", "pstate", "lower", "upper","states")]
+
+SubsetRCRTrans <- lapply(SubsetRCR, t)
+
+SummaryProbRCR <- as.data.frame(SubsetRCRTrans$pstate) %>% rename(
+  T4Pr = "V1",
+  T14Pr = "V2",
+  T38Pr = "V3",
+  T52Pr = "V4",
+  T104Pr = "V5",
+  T156Pr = "V6",
+)
+
+SummaryLCLRCR <- as.data.frame(SubsetRCRTrans$lower) %>% rename(
+  T4LCL = "V1",
+  T14LCL = "V2",
+  T38LCL = "V3",
+  T52LCL = "V4",
+  T104LCL = "V5",
+  T156LCL = "V6",
+)
+
+SummaryUCLRCR <- as.data.frame(SubsetRCRTrans$upper) %>% rename(
+  T4UCL = "V1",
+  T14UCL = "V2",
+  T38UCL = "V3",
+  T52UCL = "V4",
+  T104UCL = "V5",
+  T156UCL = "V6",
+)
+```
+
 # Analysis Results
 
 ## Record \[13\] Participants
 
 ```{epoxy}
 
-The initial export from the registry returned {nrow(SnapshotComb1)} records of all types. 
+The initial export from the registry returned {nrow(SnapshotComb)} records of all types. 
 
 ```
 
@@ -1821,7 +2456,6 @@ Details of surgical management are summarised in @tbl-surgery.
 
 ### Record \[14.3\] Follow up
 
-
 ```{r}
 #| label: tbl-followup
 #| tbl-cap: "Summary of case follow up (weeks) at the time of analysis"
@@ -1855,79 +2489,162 @@ ggplot(aes(y = TreatmentStatus2, x = TreatDuration)) +
 knitr::knit_print(FollowupSum)
 ```
 
+The follow up varied by the type of adverse event observed - as shown below in the Figure.
+
+```{r}
+#| label: fig-followup-comp
+#| fig-caption: "Case follow up separated by adverse event type"
+
+FigureFU <- ComplicMaster %>%
+ggplot(aes(y = Category, x = DurationStop1)) +
+  stat_slab(aes(thickness = after_stat(pdf*n)), scale = 0.7) +
+  stat_dotsinterval(side = "bottom", scale = 0.7, slab_linewidth = NA) +
+  scale_fill_brewer(palette = "Set2") +
+  xlab("Follow up (Months)")
+
+knitr::knit_print(FigureFU)
+```
+
 ## Record \[15\] Outcomes
 
 ### Record \[15.3\] Adverse events and complications
 
 ```{r}
-# Calculate proportion
 
-ComplicInc <- prop.test(length(unique(ComplicTable3$TreatmentUID)),nrow(Mastersheet2), conf.level = 0.95)
+# Split out Hardware       Other          Infection      Dislocation    Mortality      Wound          Neurological   TumourLocal   Fracture       Loosening      Amputation     TumourSystemic Thrombosis     ImplantRemoval 
+
+# Get factor levels (excluding "Censored")
+CategoryNoCensor <- ComplicTable6 |>
+  filter(Category_Value != "Censored") |>
+  pull(Category_Value) |>
+  unique()
+
+# Filter ComplicMaster for non-censored categories
+ComplicTRUE <- ComplicMaster |>
+  filter(Category %in% CategoryNoCensor)
+
+# Create wide format with presence/absence for each category
+ComplicMasterInc <- Mastersheet |>
+  distinct(CombID) |>
+  cross_join(tibble(Category = CategoryNoCensor)) |>
+  left_join(
+    ComplicTRUE |>
+      distinct(CombID, Category) |>
+      mutate(present = TRUE),
+    by = c("CombID", "Category")
+  ) |>
+  mutate(present = replace_na(present, FALSE)) |>
+  pivot_wider(
+    names_from = Category,
+    values_from = present,
+    values_fill = FALSE
+  )
+
+#Create summary table
+ComplicIncTable <- ComplicMasterInc |>
+  select(-CombID) |>
+  tbl_summary(
+    statistic = all_categorical() ~ "{n} ({p})"
+  ) |>
+  add_ci(
+    statistic = all_categorical() ~ "{conf.low} - {conf.high}"
+  ) |>
+  add_stat_label(
+    label = all_categorical() ~ "n (%)",
+    location = "row"
+  )
+
+as_flex_table(ComplicIncTable)
+
+
 ```
 
 ```{epoxy}
 
-Of the {nrow(Mastersheet2)} cases included in the analysis, there were {length(unique(ComplicTable3$TreatmentUID))} treatments observed with {nrow(ComplicTable3)} adverse events of any kind, equating to an incidence of {round(ComplicInc$estimate[1],3)*100} (95%CI, {round(ComplicInc$conf.int[1],3)*100} - {round(ComplicInc$conf.int[2],3)*100}). There were {nrow(ComplicTable3 %>% filter(`Reoperation Procedure` == "Yes"))} reoperations and {nrow(ComplicTable3 %>% filter(Intraop == "Yes"))} events observed intraoperatively.  
+The cohort displayed retear of N = {inline_text(ComplicIncTable, variable = RepairFailure,column = "stat_0")}% with (95%CI {inline_text(ComplicIncTable, variable = RepairFailure,column = "ci_stat_0")})%, as well as infection (N = {inline_text(ComplicIncTable, variable = Infection,column = "stat_0")}%, 95%CI {inline_text(ComplicIncTable, variable = Infection,column = "ci_stat_0")}%), implant removal (N = {inline_text(ComplicIncTable, variable = ImplantRemoval,column = "stat_0")}%, 95%CI {inline_text(ComplicIncTable, variable = ImplantRemoval,column = "ci_stat_0")}%) and capsulitis (N = {inline_text(ComplicIncTable, variable = Capsulitis,column = "stat_0")}%, 95%CI {inline_text(ComplicIncTable, variable = Capsulitis,column = "ci_stat_0")}%).
 
 ```
+
+Incidence rates were altered when viewed within the context of the multistate survival model. The cumulative incidences, when expressed at set follow up times, showed early peak incidence (\<12months of surgery) for infection (Table 10). Cumulative tendon retear also peaked at 20.6% by the 3 year followup. <!--# INSERT UPDATED TEXT -->
+
+Table 10: Summary of cumulative incidences of adverse events after rotator cuff repair with suture of interest
 
 ```{r}
-#| label: tbl-complications
-#| tbl-cap: "Summary of complications in included sample"
 
-## Slice inputs for columns and rows
+TableRCR <- dplyr::bind_cols(
+  SummaryProbRCR,
+  SummaryLCLRCR,
+  SummaryUCLRCR
+) |>
+  # Apply gt formatting
+  gt::gt(
+    rownames_to_stub = TRUE
+  ) |>
+  gt::fmt_number(
+    scale_by = 100,
+    decimals = 1
+  ) |>
+  tab_spanner(
+    label = "W4",
+    columns = starts_with("T4")
+  ) |>
+  tab_spanner(
+    label = "Wk14",
+    columns = starts_with("T14")
+  ) |>
+  tab_spanner(
+    label = "Wk38",
+    columns = starts_with("T38")
+  ) |>
+   tab_spanner(
+    label = "Wk52",
+    columns = starts_with("T52")
+  ) |>
+   tab_spanner(
+    label = "Wk104",
+    columns = starts_with("T104")
+  ) |>
+   tab_spanner(
+    label = "Wk156",
+    columns = starts_with("T156")
+  ) |>
+  cols_label(
+    contains("Pr") ~ "CumIncid",
+    contains("LCL") ~ "CI Lower",
+    contains("UCL") ~ "CI Upper"
+  ) 
 
-TableComplic <- ComplicTable3 %>%
-  dplyr::select(
-    #Intraop,
-    Strata,
-    #OccurDelay,
-    #`Reoperation Procedure`,
-    #ReopDelay,
-    GradeFelsch2021
-    ) %>%
-  tbl_summary(
-    label = list(
-    #Intraop ~ "Intraoperative",
-    Strata ~ "Complication Nature",
-    #OccurDelay ~ "Occurrence Delay (Days)",
-    #`Reoperation Procedure` ~ "Reoperation",
-    #ReopDelay ~ "Reoperation Delay (Weeks)",
-    GradeFelsch2021 ~ "Severity Grade"
-    ),
-    statistic = list(
-      #all_continuous() ~ "{mean} ({sd})",
-      all_categorical() ~ "{p} ({n})"
-    ),
-    #type = list(
-     #Intraop ~ "dichotomous"
-     #`Reoperation Procedure` ~ "dichotomous"
-     #),
-    #value = list(
-      #Intraop ~ "Yes"
-     #`Reoperation Procedure` ~ "Yes"
-    #),
-    missing = "no"
-  ) %>%
-  add_n() %>%
-  add_stat_label(location = "row") %>%
-  modify_header(
-  label = "Characteristic",
-  n = "Available\n Sample",
-  stat_0 = "Summary\n Statistic"
-  #ci_stat_0 = "95% CI"
-)
+knitr::knit_print(TableRCR)
 
- # add_ci(statistic = list(
- #        all_categorical() ~ "{conf.low} - {conf.high}",
- #        all_continuous() ~ "{conf.low} - {conf.high}"
- #        )
- #  ) %>% 
-
-gtsummary::as_flex_table(TableComplic)
 ```
 
-A summary of the adverse events observed in the cohort is included in @tbl-complications.
+The following figure illustrates the different incidence trajectories for adverse events within each cohort, when taking into account retear and implant removal as competing risks.
+
+```{r CmpRsk Plot 1}
+Figure7 <- ggcuminc(CRModelRCR, outcome = c("Capsulitis","Infection","RepairFailure","ImplantRemoval")) +
+  #add_confidence_interval() +
+  add_risktable(
+    times = c(0,26,52,104,156),
+    risktable_stats = "{n.risk} ({cum.event})"
+  ) +
+  #theme_ggsurvfit_KMunicate() +
+    labs(
+      x = "Follow up (weeks)",
+       y = "Cumulative Percentage Incidence"
+      ) +
+    scale_color_discrete(labels = c("Capsulitis", "Implant Removal", "Infection", "RepairFailure")) +
+  scale_linetype_discrete(labels = c("Capsulitis", "Implant Removal", "Infection", "RepairFailure")) +
+  scale_x_continuous(
+    limits = c(0, 158)) +
+  scale_y_continuous(
+    #limits = c(0, 0.35),
+    labels = scales::percent, 
+    expand = c(0.01, 0)
+  ) + theme_bw()
+
+knitr::knit_print(Figure7)
+
+```
 
 ### Record \[15.4\] Patient-reported outcome measures
 
@@ -1997,7 +2714,7 @@ gtsummary::as_flex_table(TableQDASHfit)
 #| tbl-cap: "Summary of QuickDASH complete case analysis"
 
 TableQDASHCCA <- tbl_summary(
-  QDASHPROMInput2 %>% dplyr::select(
+  QDASHPROMInput2 |> dplyr::select(
     TimePoint,
     QDASH
   ),
@@ -2052,7 +2769,7 @@ WORCQ3Predict <- marginaleffects::predictions(WORCQ3fit)
 
 
 TableQDASHImp <- tbl_summary(
-  QDASHPredict %>% dplyr::select(
+  QDASHPredict |> dplyr::select(
     TimePoint,
     QDASH
   ),
@@ -2072,7 +2789,7 @@ gtsummary::as_flex_table(TableQDASHImp)
 
 
 TableWORCsum <- tbl_summary(
-  WORCNormPredict %>% dplyr::select(
+  WORCNormPredict |> dplyr::select(
     TimePoint,
     WORCNorm
   ),
@@ -2085,7 +2802,7 @@ TableWORCsum <- tbl_summary(
 
 
 TableWORCQ3sum <- tbl_summary(
-  WORCQ3Predict %>% dplyr::select(
+  WORCQ3Predict |> dplyr::select(
     TimePoint,
     WORCPhysicalQ3
   ),
