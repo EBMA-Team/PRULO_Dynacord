@@ -443,6 +443,31 @@
         "Built": "R 4.4.0; ; 2024-04-23 00:26:10 UTC; windows"
       }
     },
+    "SnowballC": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "SnowballC",
+        "Type": "Package",
+        "Version": "0.7.1",
+        "Date": "2023-04-25",
+        "Title": "Snowball Stemmers Based on the C 'libstemmer' UTF-8 Library",
+        "Authors@R": "person(\"Milan\", \"Bouchet-Valat\", email=\"nalimilan@club.fr\",\n                  role=c(\"aut\", \"cre\"))",
+        "Description": "An R interface to the C 'libstemmer' library that implements\n  Porter's word stemming algorithm for collapsing words to a common\n  root to aid comparison of vocabulary. Currently supported languages are\n  Arabic, Basque, Catalan, Danish, Dutch, English, Finnish, French, German, Greek,\n  Hindi, Hungarian, Indonesian, Irish, Italian, Lithuanian, Nepali,\n  Norwegian, Portuguese, Romanian, Russian, Spanish, Swedish, Tamil\n  and Turkish.",
+        "License": "BSD_3_clause + file LICENSE",
+        "Copyright": "Dr Martin Porter (2001) and Richard Boulton (2004, 2005) for\nthe 'libstemmer' C library, and Milan Bouchet-Valat (2013) for\nthe R package contents.",
+        "URL": "https://github.com/nalimilan/R.TeMiS",
+        "BugReports": "https://github.com/nalimilan/R.TeMiS/issues",
+        "NeedsCompilation": "yes",
+        "Packaged": "2023-04-25 19:45:22 UTC; milan",
+        "Author": "Milan Bouchet-Valat [aut, cre]",
+        "Maintainer": "Milan Bouchet-Valat <nalimilan@club.fr>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-04-25 20:30:06 UTC",
+        "Built": "R 4.4.0; x86_64-w64-mingw32; 2024-04-23 00:26:55 UTC; windows",
+        "Archs": "x64"
+      }
+    },
     "SparseM": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2485,6 +2510,42 @@
         "RemoteSha": "4.0.0"
       }
     },
+    "ggsurvfit": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "ggsurvfit",
+        "Title": "Flexible Time-to-Event Figures",
+        "Version": "1.2.0",
+        "Authors@R": "c(\n    person(\"Daniel D.\", \"Sjoberg\", , \"danield.sjoberg@gmail.com\", role = c(\"aut\", \"cre\", \"cph\"),\n           comment = c(ORCID = \"0000-0003-0862-2018\")),\n    person(\"Mark\", \"Baillie\", , \"bailliem@gmail.com\", role = \"aut\"),\n    person(\"Charlotta\", \"Fruechtenicht\", , \"charlotta.fruechtenicht@roche.com\", role = \"aut\",\n           comment = c(ORCID = \"0000-0002-6689-6423\")),\n    person(\"Steven\", \"Haesendonckx\", , \"shaesen2@its.jnj.com\", role = \"aut\",\n           comment = c(ORCID = \"0000-0001-8222-3686\")),\n    person(\"Tim\", \"Treis\", , \"tim.treis@outlook.de\", role = \"aut\",\n           comment = c(ORCID = \"0000-0002-9686-4799\"))\n  )",
+        "Description": "Ease the creation of time-to-event (i.e. survival) endpoint\n    figures. The modular functions create figures ready for publication.\n    Each of the functions that add to or modify the figure are written as\n    proper 'ggplot2' geoms or stat methods, allowing the functions from\n    this package to be combined with any function or customization from\n    'ggplot2' and other 'ggplot2' extension packages.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://github.com/pharmaverse/ggsurvfit,\nhttps://www.danieldsjoberg.com/ggsurvfit/",
+        "BugReports": "https://github.com/pharmaverse/ggsurvfit/issues",
+        "Depends": "R (>= 4.1.0)",
+        "Imports": "broom (>= 1.0.0), cli (>= 3.0.0), dplyr (>= 1.0.3), ggplot2\n(>= 4.0.0), glue (>= 1.6.0), gtable, patchwork (>= 1.1.0),\nrlang (>= 1.0.0), survival (>= 3.6-4), tidyr (>= 1.0.0)",
+        "Suggests": "covr, knitr, rmarkdown, scales (>= 1.1.0), spelling, testthat\n(>= 3.2.0), tidycmprsk (>= 1.0.0), vdiffr (>= 1.0.0), withr",
+        "VignetteBuilder": "knitr",
+        "Config/Needs/website": "cowplot, ggeasy, gghighlight",
+        "Config/testthat/edition": "3",
+        "Encoding": "UTF-8",
+        "Language": "en-US",
+        "LazyData": "true",
+        "RoxygenNote": "7.3.3",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-09-13 00:52:24 UTC; sjobergd",
+        "Author": "Daniel D. Sjoberg [aut, cre, cph] (ORCID:\n    <https://orcid.org/0000-0003-0862-2018>),\n  Mark Baillie [aut],\n  Charlotta Fruechtenicht [aut] (ORCID:\n    <https://orcid.org/0000-0002-6689-6423>),\n  Steven Haesendonckx [aut] (ORCID:\n    <https://orcid.org/0000-0001-8222-3686>),\n  Tim Treis [aut] (ORCID: <https://orcid.org/0000-0002-9686-4799>)",
+        "Maintainer": "Daniel D. Sjoberg <danield.sjoberg@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-09-13 05:10:34 UTC",
+        "Built": "R 4.4.3; ; 2025-10-08 04:07:13 UTC; windows",
+        "RemoteType": "standard",
+        "RemotePkgRef": "ggsurvfit",
+        "RemoteRef": "ggsurvfit",
+        "RemoteRepos": "https://cran.rstudio.com",
+        "RemoteSha": "1.2.0"
+      }
+    },
     "glmnet": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -3230,6 +3291,33 @@
         "Repository": "CRAN",
         "Date/Publication": "2022-02-05 00:50:08 UTC",
         "Built": "R 4.4.0; ; 2024-04-27 00:39:22 UTC; windows"
+      }
+    },
+    "janeaustenr": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "janeaustenr",
+        "Title": "Jane Austen's Complete Novels",
+        "Version": "1.0.0",
+        "Authors@R": "\n    person(\"Julia\", \"Silge\", , \"julia.silge@gmail.com\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-3671-836X\"))",
+        "Description": "Full texts for Jane Austen's 6 completed novels, ready for\n    text analysis. These novels are \"Sense and Sensibility\", \"Pride and\n    Prejudice\", \"Mansfield Park\", \"Emma\", \"Northanger Abbey\", and\n    \"Persuasion\".",
+        "License": "MIT + file LICENSE",
+        "URL": "https://github.com/juliasilge/janeaustenr",
+        "BugReports": "https://github.com/juliasilge/janeaustenr/issues",
+        "Depends": "R (>= 3.5)",
+        "Suggests": "dplyr, testthat",
+        "Config/testthat/edition": "3",
+        "Encoding": "UTF-8",
+        "LazyData": "true",
+        "RoxygenNote": "7.2.1",
+        "NeedsCompilation": "no",
+        "Packaged": "2022-08-26 22:14:26 UTC; juliasilge",
+        "Author": "Julia Silge [aut, cre] (<https://orcid.org/0000-0002-3671-836X>)",
+        "Maintainer": "Julia Silge <julia.silge@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2022-08-26 22:32:06 UTC",
+        "Built": "R 4.4.0; ; 2024-05-04 00:55:27 UTC; windows"
       }
     },
     "jomo": {
@@ -6146,6 +6234,42 @@
         "Built": "R 4.4.0; ; 2024-04-27 01:51:40 UTC; windows"
       }
     },
+    "tidytext": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Type": "Package",
+        "Package": "tidytext",
+        "Title": "Text Mining using 'dplyr', 'ggplot2', and Other Tidy Tools",
+        "Version": "0.4.3",
+        "Authors@R": "c(\n    person(\"Gabriela\", \"De Queiroz\", , \"gabidequeiroz@gmail.com\", role = \"ctb\"),\n    person(\"Colin\", \"Fay\", , \"contact@colinfay.me\", role = \"ctb\",\n           comment = c(ORCID = \"0000-0001-7343-1846\")),\n    person(\"Emil\", \"Hvitfeldt\", , \"emilhhvitfeldt@gmail.com\", role = \"ctb\"),\n    person(\"Os\", \"Keyes\", , \"ironholds@gmail.com\", role = \"ctb\",\n           comment = c(ORCID = \"0000-0001-5196-609X\")),\n    person(\"Kanishka\", \"Misra\", , \"kmisra@purdue.edu\", role = \"ctb\"),\n    person(\"Tim\", \"Mastny\", , \"tim.mastny@gmail.com\", role = \"ctb\"),\n    person(\"Jeff\", \"Erickson\", , \"jeff@erick.so\", role = \"ctb\"),\n    person(\"David\", \"Robinson\", , \"admiral.david@gmail.com\", role = \"aut\"),\n    person(\"Julia\", \"Silge\", , \"julia.silge@gmail.com\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-3671-836X\"))\n  )",
+        "Description": "Using tidy data principles can make many text mining tasks\n    easier, more effective, and consistent with tools already in wide use.\n    Much of the infrastructure needed for text mining with tidy data\n    frames already exists in packages like 'dplyr', 'broom', 'tidyr', and\n    'ggplot2'. In this package, we provide functions and supporting data\n    sets to allow conversion of text to and from tidy formats, and to\n    switch seamlessly between tidy tools and existing text mining\n    packages.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://juliasilge.github.io/tidytext/,\nhttps://github.com/juliasilge/tidytext",
+        "BugReports": "https://github.com/juliasilge/tidytext/issues",
+        "Depends": "R (>= 2.10)",
+        "Imports": "cli, dplyr (>= 1.1.1), generics, janeaustenr, lifecycle,\nMatrix, methods, purrr (>= 0.1.1), rlang (>= 0.4.10), stringr,\ntibble, tokenizers, vctrs",
+        "Suggests": "broom, covr, data.table, ggplot2, hunspell, knitr, mallet,\nNLP, quanteda, readr, reshape2, rmarkdown, scales, stm,\nstopwords, testthat (>= 2.1.0), textdata, tidyr, tm,\ntopicmodels, vdiffr, wordcloud",
+        "VignetteBuilder": "knitr",
+        "Config/Needs/website": "ropensci/gutenbergr",
+        "Config/testthat/edition": "3",
+        "Encoding": "UTF-8",
+        "LazyData": "TRUE",
+        "RoxygenNote": "7.3.2",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-07-25 01:12:50 UTC; juliasilge",
+        "Author": "Gabriela De Queiroz [ctb],\n  Colin Fay [ctb] (ORCID: <https://orcid.org/0000-0001-7343-1846>),\n  Emil Hvitfeldt [ctb],\n  Os Keyes [ctb] (ORCID: <https://orcid.org/0000-0001-5196-609X>),\n  Kanishka Misra [ctb],\n  Tim Mastny [ctb],\n  Jeff Erickson [ctb],\n  David Robinson [aut],\n  Julia Silge [aut, cre] (ORCID: <https://orcid.org/0000-0002-3671-836X>)",
+        "Maintainer": "Julia Silge <julia.silge@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-07-25 05:00:02 UTC",
+        "Built": "R 4.4.3; ; 2025-10-08 03:10:58 UTC; windows",
+        "RemoteType": "standard",
+        "RemotePkgRef": "tidytext",
+        "RemoteRef": "tidytext",
+        "RemoteRepos": "https://cran.rstudio.com",
+        "RemoteSha": "0.4.3"
+      }
+    },
     "tidyverse": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -6290,6 +6414,38 @@
         "Repository": "CRAN",
         "Date/Publication": "2025-04-15 15:50:03 UTC",
         "Built": "R 4.4.3; ; 2025-06-02 01:27:58 UTC; windows"
+      }
+    },
+    "tokenizers": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "tokenizers",
+        "Type": "Package",
+        "Title": "Fast, Consistent Tokenization of Natural Language Text",
+        "Version": "0.3.0",
+        "Date": "2022-12-19",
+        "Description": "Convert natural language text into tokens. Includes tokenizers for\n    shingled n-grams, skip n-grams, words, word stems, sentences, paragraphs,\n    characters, shingled characters, lines, Penn Treebank, regular\n    expressions, as well as functions for counting characters, words, and sentences,\n    and a function for splitting longer texts into separate documents, each with\n    the same number of words.  The tokenizers have a consistent interface, and\n    the package is built on the 'stringi' and 'Rcpp' packages for  fast\n    yet correct tokenization in 'UTF-8'. ",
+        "License": "MIT + file LICENSE",
+        "LazyData": "yes",
+        "Authors@R": "c(person(\"Lincoln\", \"Mullen\", role = c(\"aut\", \"cre\"),\n        email = \"lincoln@lincolnmullen.com\",\n        comment = c(ORCID = \"0000-0001-5103-6917\")),\n        person(\"Os\", \"Keyes\", role = c(\"ctb\"),\n        email = \"ironholds@gmail.com\",\n        comment = c(ORCID = \"0000-0001-5196-609X\")),\n        person(\"Dmitriy\", \"Selivanov\", role = c(\"ctb\"),\n        email = \"selivanov.dmitriy@gmail.com\"),\n        person(\"Jeffrey\", \"Arnold\", role = c(\"ctb\"),\n        email = \"jeffrey.arnold@gmail.com\",\n        comment = c(ORCID = \"0000-0001-9953-3904\")),\n        person(\"Kenneth\", \"Benoit\", role = c(\"ctb\"),\n        email = \"kbenoit@lse.ac.uk\",\n        comment = c(ORCID = \"0000-0002-0797-564X\")))",
+        "URL": "https://docs.ropensci.org/tokenizers/,\nhttps://github.com/ropensci/tokenizers",
+        "BugReports": "https://github.com/ropensci/tokenizers/issues",
+        "RoxygenNote": "7.2.1",
+        "Depends": "R (>= 3.1.3)",
+        "Imports": "stringi (>= 1.0.1), Rcpp (>= 0.12.3), SnowballC (>= 0.5.1)",
+        "LinkingTo": "Rcpp",
+        "Encoding": "UTF-8",
+        "Suggests": "covr, knitr, rmarkdown, stopwords (>= 0.9.0), testthat",
+        "VignetteBuilder": "knitr",
+        "NeedsCompilation": "yes",
+        "Packaged": "2022-12-20 21:28:10 UTC; lmullen",
+        "Author": "Lincoln Mullen [aut, cre] (<https://orcid.org/0000-0001-5103-6917>),\n  Os Keyes [ctb] (<https://orcid.org/0000-0001-5196-609X>),\n  Dmitriy Selivanov [ctb],\n  Jeffrey Arnold [ctb] (<https://orcid.org/0000-0001-9953-3904>),\n  Kenneth Benoit [ctb] (<https://orcid.org/0000-0002-0797-564X>)",
+        "Maintainer": "Lincoln Mullen <lincoln@lincolnmullen.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2022-12-22 08:50:02 UTC",
+        "Built": "R 4.4.0; x86_64-w64-mingw32; 2024-05-04 00:55:28 UTC; windows",
+        "Archs": "x64"
       }
     },
     "tune": {
@@ -6677,6 +6833,32 @@
         "Built": "R 4.4.1; ; 2024-11-04 01:27:46 UTC; windows"
       }
     },
+    "wordcloud": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "wordcloud",
+        "Type": "Package",
+        "Title": "Word Clouds",
+        "Version": "2.6",
+        "Author": "Ian Fellows",
+        "Maintainer": "Ian Fellows <ian@fellstat.com>",
+        "Description": "Functionality to create pretty word clouds, visualize differences and similarity between documents, and avoid over-plotting in scatter plots with text.",
+        "License": "LGPL-2.1",
+        "LazyLoad": "yes",
+        "Depends": "methods, RColorBrewer",
+        "Imports": "Rcpp (>= 0.9.4)",
+        "Suggests": "tm (>= 0.6), slam",
+        "URL": "http://blog.fellstat.com/?cat=11 http://www.fellstat.com",
+        "LinkingTo": "Rcpp",
+        "NeedsCompilation": "yes",
+        "Packaged": "2018-08-24 18:57:30 UTC; ianfellows",
+        "Repository": "CRAN",
+        "Date/Publication": "2018-08-24 19:20:03 UTC",
+        "Built": "R 4.4.0; x86_64-w64-mingw32; 2024-05-14 00:37:31 UTC; windows",
+        "Archs": "x64"
+      }
+    },
     "workflows": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -6903,14 +7085,17 @@
     }
   },
   "files": {
+    ".RData": {
+      "checksum": "bb3495e18a5e664c8054051af311f322"
+    },
     ".secrets/c13dc354db9600c8cd9b2bd868d1bf25_cscholes@ebma.com.au": {
-      "checksum": "47da91c1c0958781d8f18190efb0b575"
+      "checksum": "cff6705979294c9a5fb4a5fa297d5617"
     },
     "Dynacord references.bib": {
       "checksum": "47203f3af71c3faadc67d49066e503f9"
     },
     "figures_export/CCADASH.png": {
-      "checksum": "25e32a13ba135af2a036dc60d4dbda10"
+      "checksum": "b891f56d365475985b4d359d7e95a0e8"
     },
     "figures_export/CCAWORC1.png": {
       "checksum": "fcdc06099b8fa69f188e366fe9f9b05b"
@@ -6919,100 +7104,133 @@
       "checksum": "9955c438df186dcb35113b595e71e47a"
     },
     "figures_export/fig-cca-1.png": {
-      "checksum": "74ff40e17a556ef8461a93ac994a7c7b"
+      "checksum": "50b120f195d026d7a7991d829de4cb5c"
+    },
+    "figures_export/fig-comprisk-1.png": {
+      "checksum": "b3ab8a889c44316fdb71031dc379fc72"
     },
     "figures_export/fig-followup-1.png": {
-      "checksum": "727f8fc28f26ff3061f71cffb309853f"
+      "checksum": "ca246ea5e37697196279309143937c28"
+    },
+    "figures_export/fig-followup-comp-1.png": {
+      "checksum": "dbb604f99527151671a0da30b9230c35"
     },
     "figures_export/fig-missing-1.png": {
-      "checksum": "03cb61a92f008b315b298f2e679823be"
+      "checksum": "e6cfa3402a09e9b8e756bd78c9a5c34c"
     },
     "figures_export/fig-missing-2.png": {
-      "checksum": "4b32d4d2e449a5e7bc999448c8023b66"
+      "checksum": "c696f6e33ee1c92a62fbef64385a7ef7"
     },
     "figures_export/fig-PROMsImp-1.png": {
-      "checksum": "14e7b82d61227825515c13406c59aa27"
+      "checksum": "5ef28dfa85303e764bd85b3c7dfef6e4"
     },
     "figures_export/fig-QDASHstrip-1.png": {
-      "checksum": "82aa19f313800a4280c28145046a5811"
+      "checksum": "0204a31089c48f685f103acd6c8c0005"
     },
     "figures_export/fig-strobe-1.png": {
-      "checksum": "9ff70065981c650d252139f0f40ce80a"
+      "checksum": "92216383c5927d00b3d7e7b69d2097ea"
     },
     "figures_export/fig-WORCstrip-1.png": {
-      "checksum": "254d2ef4c9001c094aab100ac42015e2"
+      "checksum": "21d5399906ce5de248100030411a0343"
     },
     "figures_export/fig-WORCstrip-2.png": {
-      "checksum": "55973c9682fc35dffec223be8561014a"
+      "checksum": "8ff5a35afff58bd1ccb731468de28bf6"
+    },
+    "figures_export/fig-wordcloud-1.png": {
+      "checksum": "efc846f1f9834a1bf37e22de0936ec53"
+    },
+    "figures_export/Figure1.png": {
+      "checksum": "acceaa689776b7aad25979c4252a9e83"
+    },
+    "figures_export/Figure7.png": {
+      "checksum": "55d65b567eecc252f0f5f20a02935461"
+    },
+    "figures_export/FigureFU.png": {
+      "checksum": "427f953d861bf42abeb3c1003ab1663c"
     },
     "figures_export/FollowupSum.png": {
-      "checksum": "51f18020b8a41d403d9b80851d6efb7a"
+      "checksum": "8545f48f6a492a5548b0608a4db45c22"
     },
     "figures_export/MissFig1.png": {
-      "checksum": "7a0d612ed772f7ad9a5fd70897c864c3"
+      "checksum": "7dc110e8a8fb86151869952468c00136"
     },
     "figures_export/MissFig2.png": {
-      "checksum": "4d91eb8d78e13ca242beb0605f684a3c"
+      "checksum": "83120e2fee1df7652a617f8a124004b0"
     },
     "figures_export/MissFig3.png": {
-      "checksum": "35dcbb93a2fee4621fcb974307a76c23"
+      "checksum": "33302cac5b13afd532b3d1416c8e2750"
     },
     "figures_export/MissFig4.png": {
-      "checksum": "3e7a3eda8078f20eb9f46b900aa486af"
+      "checksum": "d500fdde1e765ddb71b2763d2988d91a"
     },
     "figures_export/MissFig5.png": {
-      "checksum": "4c8c56b0cfc14b6c8bbdcee9afa951e3"
+      "checksum": "1111cd0478a6cd85cffe9cb0d0631972"
     },
     "figures_export/QDASHprPlot.png": {
-      "checksum": "3ab2ac264b79ebf3aef5030e0f39f632"
+      "checksum": "f53bd52365654bc0119873aa4db84f0f"
     },
     "figures_export/STROBEPlot.png": {
-      "checksum": "e538d67fe144345c8cc58cc0c62dc79f"
+      "checksum": "2e81189265f5eaffefc0ff9c5bb6ea71"
+    },
+    "figures_export/unnamed-chunk-16-1.png": {
+      "checksum": "638a8b1469e209aa35352fd6d1338bfc"
     },
     "figures_export/WORCNormprPlot.png": {
-      "checksum": "84d8b8375d81d5803848e116c7714aff"
+      "checksum": "b6ba38b5156b65ff66e934db98a63d70"
     },
     "figures_export/WORCQ3prPlot.png": {
-      "checksum": "2b26fe5ce0e0b4bc50d82f4e4b807f07"
+      "checksum": "aa872d4a8a161424e9297f3f2422afe4"
     },
     "grateful-refs.bib": {
-      "checksum": "06ed51dab3b6319dd1bd8272fdcfcec2"
+      "checksum": "649623c69a496fffc7d95dc87089e302"
     },
     "LICENSE": {
       "checksum": "3a3f3cea56febea828890847e3cb11d7"
     },
     "PRULO_Dynacord.html": {
-      "checksum": "45eb27bf4f20b3fc39a62e5b3c5ce85f"
+      "checksum": "f0d413da9243e262ce55bca6b7c27421"
     },
     "PRULO_Dynacord.qmd": {
-      "checksum": "f93f1e64bb5b974dd636648f29a0453f"
+      "checksum": "b8ba4b86368bbc7a877c13e7943b05e0"
     },
     "PRULO_Dynacord_files/figure-html/fig-cca-1.png": {
-      "checksum": "74ff40e17a556ef8461a93ac994a7c7b"
+      "checksum": "50b120f195d026d7a7991d829de4cb5c"
+    },
+    "PRULO_Dynacord_files/figure-html/fig-comprisk-1.png": {
+      "checksum": "b3ab8a889c44316fdb71031dc379fc72"
     },
     "PRULO_Dynacord_files/figure-html/fig-followup-1.png": {
-      "checksum": "727f8fc28f26ff3061f71cffb309853f"
+      "checksum": "ca246ea5e37697196279309143937c28"
+    },
+    "PRULO_Dynacord_files/figure-html/fig-followup-comp-1.png": {
+      "checksum": "dbb604f99527151671a0da30b9230c35"
     },
     "PRULO_Dynacord_files/figure-html/fig-missing-1.png": {
-      "checksum": "03cb61a92f008b315b298f2e679823be"
+      "checksum": "e6cfa3402a09e9b8e756bd78c9a5c34c"
     },
     "PRULO_Dynacord_files/figure-html/fig-missing-2.png": {
-      "checksum": "4b32d4d2e449a5e7bc999448c8023b66"
+      "checksum": "c696f6e33ee1c92a62fbef64385a7ef7"
     },
     "PRULO_Dynacord_files/figure-html/fig-PROMsImp-1.png": {
-      "checksum": "14e7b82d61227825515c13406c59aa27"
+      "checksum": "5ef28dfa85303e764bd85b3c7dfef6e4"
     },
     "PRULO_Dynacord_files/figure-html/fig-QDASHstrip-1.png": {
-      "checksum": "82aa19f313800a4280c28145046a5811"
+      "checksum": "0204a31089c48f685f103acd6c8c0005"
     },
     "PRULO_Dynacord_files/figure-html/fig-strobe-1.png": {
-      "checksum": "9ff70065981c650d252139f0f40ce80a"
+      "checksum": "92216383c5927d00b3d7e7b69d2097ea"
     },
     "PRULO_Dynacord_files/figure-html/fig-WORCstrip-1.png": {
-      "checksum": "254d2ef4c9001c094aab100ac42015e2"
+      "checksum": "21d5399906ce5de248100030411a0343"
     },
     "PRULO_Dynacord_files/figure-html/fig-WORCstrip-2.png": {
-      "checksum": "55973c9682fc35dffec223be8561014a"
+      "checksum": "8ff5a35afff58bd1ccb731468de28bf6"
+    },
+    "PRULO_Dynacord_files/figure-html/fig-wordcloud-1.png": {
+      "checksum": "efc846f1f9834a1bf37e22de0936ec53"
+    },
+    "PRULO_Dynacord_files/figure-html/unnamed-chunk-16-1.png": {
+      "checksum": "638a8b1469e209aa35352fd6d1338bfc"
     },
     "PRULO_Dynacord_files/libs/bootstrap/bootstrap-icons.css": {
       "checksum": "2318f137d201fbf51601fa0faba6bef7"

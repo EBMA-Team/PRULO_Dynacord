@@ -85,6 +85,7 @@ Packages were loaded initially with *pacman* package. Citations were applied to 
 
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(
+  "wordcloud",
   "ggsurvfit",
   "tidytext",
   "dplyr",
