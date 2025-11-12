@@ -10,7 +10,7 @@ type: "website"
 number-sections: true
 number-depth: 3
 date: "2023-Aug-21"
-date-modified: "2025-Nov-07"
+date-modified: "2025-Nov-12"
 
 bibliography: 
   - Dynacord references.bib
@@ -2853,7 +2853,7 @@ TableQDASHCCA <- tbl_summary(
     QDASH ~ "QuickDASH"
   ),
   statistic = list(all_continuous() ~ "{median} ({p25} - {p75})"),
-  #missing = "ifany"
+  missing = "no"
     )
 
 gtsummary::as_flex_table(TableQDASHCCA)
