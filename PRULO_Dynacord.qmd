@@ -853,7 +853,7 @@ ComplicTable2 <- ComplicTable1 |> bind_rows(
     Intraop
   )
 ) |> dplyr::filter(
-    TreatmentUID %in% Mastersheet2$TreatmentUID & (DateofOccurrence < ymd(CurrentDate))
+    TreatmentUID %in% Mastersheet$TreatmentUID & (DateofOccurrence < ymd(CurrentDate))
     )
 
 
@@ -1088,11 +1088,94 @@ Thrombosis = case_when(
     stringr::str_detect(Term4,"vein|thromb*|embo*|occlus*") ~ "Thrombosis",
     .default = "No"
   ),
+Reoperation = case_when(
+  ReoperationProcedure == "Yes" ~ "Reoperation",
+  is.na(ReoperationProcedure) ~ "No",
+  .default = "No"
+),
   PatientID = stringr::str_split_i(TreatmentUID,"\\.",1)
 )
 
 ```
 
+
+```{r}
+
+ComplicCensor <- Mastersheet |> filter(
+  !(TreatmentUID %in% ComplicTable5$TreatmentUID)
+) |> dplyr::select(
+  TreatmentUID
+) |> mutate(
+  Censor = "Censor",
+  DateofOccurrence = ymd(CurrentDate)
+)
+
+ComplicMasterRev <- bind_rows(
+  ComplicTable5 |> dplyr::filter(
+    !(ComplicationNature == "Reoperation"),
+    !(Explant == "Explant")
+  ) |> dplyr::select(
+    -Explant
+  ),
+  ComplicCensor
+) |> group_by(
+  TreatmentUID
+) |> arrange(DateofOccurrence) |> mutate(
+  RecordN = row_number()
+) |> ungroup() |> arrange(TreatmentUID)
+
+# Collapse complications to one row per TreatmentUID
+ComplicMasterTotal <- ComplicMasterRev |>
+  group_by(TreatmentUID) |>
+  summarise(
+    # Keep first occurrence for complication-specific columns
+    Timestamp = first(Timestamp),
+    ComplicationID = first(ComplicationID),
+    ComplicationOccurrence = first(ComplicationOccurrence),
+    DateofOccurrence = first(DateofOccurrence),
+    ComplicationNature = first(ComplicationNature),
+    ReoperationProcedure = first(ReoperationProcedure),
+    ReoperationProcedureDate = first(ReoperationProcedureDate),
+    CombID = first(CombID),
+    DateTreatment = first(DateTreatment),
+    ReopDelay = first(ReopDelay),
+    OccurDelay = first(OccurDelay),
+    Intraop = first(Intraop),
+    ComplicationOccurrence2 = first(ComplicationOccurrence2),
+    Term3 = first(Term3),
+    
+    # Concatenate Term4 column
+    Term4 = paste(unique(na.omit(Term4)), collapse = "; "),
+    
+    # Any "Yes" approach for binary columns
+    Infection = if_else(any(Infection == "Infection", na.rm = TRUE), "Infection", "No"),
+    ImplantRemoval = if_else(any(ImplantRemoval == "ImplantRemoval", na.rm = TRUE), "Implant Removal", "No"),
+    RepairFailure = if_else(any(RepairFailure == "RepairFailure", na.rm = TRUE), "Repair Failure", "No"),
+    Loosening = if_else(any(Loosening == "Loosening", na.rm = TRUE), "Loosening", "No"),
+    Capsulitis = if_else(any(Capsulitis == "Capsulitis", na.rm = TRUE), "Capsulitis", "No"),
+    Neurological = if_else(any(Neurological == "Neurological", na.rm = TRUE), "Neurological", "No"),
+    Hardware = if_else(any(Hardware == "Hardware", na.rm = TRUE), "Hardware", "No"),
+    HardwareIrritation = if_else(any(HardwareIrritation == "Hardware Irritation", na.rm = TRUE), "Hardware Irritation", "No"),
+    PainOther = if_else(any(PainOther == "Pain - Other", na.rm = TRUE), "Pain - Other", "No"),
+    Fracture = if_else(any(Fracture == "Fracture", na.rm = TRUE), "Fracture", "No"),
+    Wound = if_else(any(Wound == "Wound", na.rm = TRUE), "Wound", "No"),
+    Thrombosis = if_else(any(Thrombosis == "Thrombosis", na.rm = TRUE), "Thrombosis", "No"),
+    Reoperation = if_else(any(Reoperation == "Reoperation", na.rm = TRUE), "Reoperation", "No"),
+    Censor = if_else(any(Censor == "Censor", na.rm = TRUE), "Censor", "No"),
+    
+    # Keep other administrative columns
+    PatientID = first(PatientID),
+    Censor = first(Censor),
+    RecordN = first(RecordN)
+  ) |>  ungroup() |> rows_insert( # add two records that seem to have fallen off the complictable 
+    tibble(
+      TreatmentUID = c("1615.1","781.1"),
+      Censor = c("Censor","Censor"),
+      DateofOccurrence = c(ymd(CurrentDate),ymd(CurrentDate))
+    )
+  ) |> mutate(across(Infection:Reoperation, ~replace_na(.x, "No")))
+
+```
 
 ```{r}
 
@@ -1130,7 +1213,7 @@ gs4_auth(token = drive_token())
  googlesheets4::range_write(
    ss = SheetIDs$StudySS,
    data = ComplicTable5 |> filter(
-    ComplicationNature != "Reoperation"
+    Reoperation != "Reoperation"
    ) |> dplyr::select(
      TreatmentUID,
      ComplicationID,
@@ -1180,7 +1263,7 @@ ComplicTable6 <- ComplicTable5 |> dplyr::select(!(c(
   ReopDelay,
   OccurDelay))
   ) |> pivot_longer(
-  cols = Infection:Thrombosis,
+  cols = Infection:Reoperation,
   cols_vary = "slowest",
   names_to = "Category_Name",
   values_to = "Category_Value",
@@ -1285,7 +1368,7 @@ ComplicMaster <- bind_rows(
     by_group = TRUE,
     DateofOccurrence
   ) |> ungroup() |> filter( # remove reoperations that occur with end states
-    Category_Value != "Reoperation",
+    #Category_Value != "Reoperation",
     !(CombID %in% MasterEnd$CombID | (CombID %in% MastersheetFail$CombID))
   ) |> mutate(
     DateofOccurrence1 = case_when(
@@ -2093,11 +2176,11 @@ WORCImputed <- mice::mice(
 plot(WORCImputed)
 ```
 
-# RECORD \[12.5\] Analysis
+## Record \[12.5\] Analysis
 
 A flow chart was created with the *consort* package (v`{r} utils::packageVersion("consort")`) [@consort] to describe the inclusion and exclusion of records into the sample pool for the present analysis to be drawn from. Patient demographics, pathology characteristics and surgical details were summarised using *gtsummary* (v`{r} utils::packageVersion("gtsummary")`) [@gtsummary]. Alpha was set for all significance tests at 5%, with confidence intervals of 95% used to bound point estimates for central tendency and model coefficients.
 
-## Adverse Events
+### Adverse Events
 
 The analysis of adverse events and treatment/patient survival after arthroplasty remains a challenging endeavour, made more so by the complexities of ortho-oncology. Attempts have been made to standardize reporting of adverse outcomes after rotator cuff surgery \[citations\]. However, a key challenge of reporting incidence rates of these outcomes in a given sample is the variability in follow up from one patient to another in the same analytical sample. With variation in follow up, the uni-dimensional estimate of incidence (number with condition/total available sample) leads to considerable underestimation of the true rate, since some cases have not yet reached sufficient follow up to experience the event of interest. For this reason time-to-event (survival) analysis provides superior incidence estimates - however, there are additional aspects of the present analysis that preclude the use of traditional Kaplan-Meier analysis.
 
@@ -2510,41 +2593,43 @@ knitr::knit_print(FigureFU)
 ### Record \[15.3\] Adverse events and complications
 
 ```{r}
+#| label: tbl-complicinc
+#| tbl-caption: "Summary of adverse events after receiving implant of interest (index procedure)"
 
 # Split out Hardware       Other          Infection      Dislocation    Mortality      Wound          Neurological   TumourLocal   Fracture       Loosening      Amputation     TumourSystemic Thrombosis     ImplantRemoval 
 
 # Get factor levels (excluding "Censored")
-CategoryNoCensor <- ComplicTable6 |>
-  filter(Category_Value != "Censored") |>
-  pull(Category_Value) |>
-  unique()
-
-# Filter ComplicMaster for non-censored categories
-ComplicTRUE <- ComplicMaster |>
-  filter(Category %in% CategoryNoCensor)
-
-# Create wide format with presence/absence for each category
-ComplicMasterInc <- Mastersheet |>
-  distinct(CombID) |>
-  cross_join(tibble(Category = CategoryNoCensor)) |>
-  left_join(
-    ComplicTRUE |>
-      distinct(CombID, Category) |>
-      mutate(present = TRUE),
-    by = c("CombID", "Category")
-  ) |>
-  mutate(present = replace_na(present, FALSE)) |>
-  pivot_wider(
-    names_from = Category,
-    values_from = present,
-    values_fill = FALSE
-  )
+# CategoryNoCensor <- ComplicTable6 |>
+#   filter(Category_Value != "Censored") |>
+#   pull(Category_Value) |>
+#   unique()
 
 #Create summary table
-ComplicIncTable <- ComplicMasterInc |>
-  select(-CombID) |>
-  tbl_summary(
-    statistic = all_categorical() ~ "{n} ({p})"
+ComplicIncTable <- ComplicMasterTotal |>
+  select(
+    Infection,
+    RepairFailure,
+    ImplantRemoval,
+    Capsulitis,
+    Loosening,
+    Neurological,
+    Thrombosis,
+    Reoperation,
+    PainOther
+  ) |> tbl_summary(
+    statistic = all_categorical() ~ "{n} ({p})",
+    type = all_categorical() ~ "dichotomous",
+    value = list(
+    Infection ~ "Infection",
+    RepairFailure ~ "Repair Failure",
+    ImplantRemoval ~ "Implant Removal",
+    Capsulitis ~ "Capsulitis",
+    Loosening ~ "Loosening",
+    Neurological ~ "Neurological",
+    Thrombosis ~ "Thrombosis",
+    Reoperation ~ "Reoperation",
+    PainOther ~ "Pain - Other"
+    )
   ) |>
   add_ci(
     statistic = all_categorical() ~ "{conf.low} - {conf.high}"
@@ -2561,15 +2646,53 @@ as_flex_table(ComplicIncTable)
 
 ```{epoxy}
 
-The cohort displayed retear of N = {inline_text(ComplicIncTable, variable = RepairFailure,column = "stat_0")}% with (95%CI {inline_text(ComplicIncTable, variable = RepairFailure,column = "ci_stat_0")})%, as well as infection (N = {inline_text(ComplicIncTable, variable = Infection,column = "stat_0")}%, 95%CI {inline_text(ComplicIncTable, variable = Infection,column = "ci_stat_0")}%), implant removal (N = {inline_text(ComplicIncTable, variable = ImplantRemoval,column = "stat_0")}%, 95%CI {inline_text(ComplicIncTable, variable = ImplantRemoval,column = "ci_stat_0")}%) and capsulitis (N = {inline_text(ComplicIncTable, variable = Capsulitis,column = "stat_0")}%, 95%CI {inline_text(ComplicIncTable, variable = Capsulitis,column = "ci_stat_0")}%).
+The cohort displayed retear or failure to heal of N = {inline_text(ComplicIncTable, variable = RepairFailure,column = "stat_0")}% with (95%CI {inline_text(ComplicIncTable, variable = RepairFailure,column = "ci_stat_0")})%, as well as infection (N = {inline_text(ComplicIncTable, variable = Infection,column = "stat_0")}%, 95%CI {inline_text(ComplicIncTable, variable = Infection,column = "ci_stat_0")}%), implant removal (N = {inline_text(ComplicIncTable, variable = ImplantRemoval,column = "stat_0")}%, 95%CI {inline_text(ComplicIncTable, variable = ImplantRemoval,column = "ci_stat_0")}%) and capsulitis (N = {inline_text(ComplicIncTable, variable = Capsulitis,column = "stat_0")}%, 95%CI {inline_text(ComplicIncTable, variable = Capsulitis,column = "ci_stat_0")}%).
 
 ```
 
-Incidence rates were altered when viewed within the context of the multistate survival model. The cumulative incidences, when expressed at set follow up times, showed early peak incidence (\<12months of surgery) for infection (Table 10). Cumulative tendon retear also peaked at 20.6% by the 3 year followup. <!--# INSERT UPDATED TEXT -->
-
-Table 10: Summary of cumulative incidences of adverse events after rotator cuff repair with suture of interest
+Table 9: 
 
 ```{r}
+#| label: tbl-complicgrade
+#| tbl-caption: "Cross tabulation of adverse event category with modified Sink grade for complication severity (Felsch et al 2021)"
+
+ComplicGraded2 <- ComplicGraded |> left_join(
+  ComplicTable6 |> dplyr::select(
+    ComplicationID,
+    Category_Value,
+    TreatmentUID
+  ) |> filter(
+    ComplicationID %in% ComplicGraded$ComplicationID
+  ),
+  by = "ComplicationID"
+) |> filter(
+  !(Category_Value == "Reoperation")
+)
+
+ComplicGradeTable <- ComplicGraded2 %>% dplyr::select(
+  Category_Value,
+  GradeFelsch
+  ) %>% tbl_summary(
+    by = GradeFelsch,
+    statistic = all_categorical() ~ "{n} ({p})"
+    ) %>% add_stat_label(
+    # update default statistic label for continuous variables
+    label = all_categorical() ~ "n (%)",
+    location = "row"
+  ) %>% add_overall()
+
+as_flex_table(ComplicGradeTable)
+
+```
+
+
+Incidence rates were altered when viewed within the context of the multistate survival model. The cumulative incidences, when expressed at set follow up times, showed early peak incidence (\<12months of surgery) for infection (Table 10). Cumulative tendon retear also peaked at 20.6% by the 3 year followup. <!--# INSERT UPDATED TEXT -->
+
+
+```{r}
+#| label: tbl-cuminc
+#| tbl-cap: "Summary of cumulative incidences of adverse events after rotator cuff repair with suture of interest"
+
 
 TableRCR <- dplyr::bind_cols(
   SummaryProbRCR,
@@ -2620,8 +2743,12 @@ knitr::knit_print(TableRCR)
 
 The following figure illustrates the different incidence trajectories for adverse events within each cohort, when taking into account retear and implant removal as competing risks.
 
-```{r CmpRsk Plot 1}
-Figure7 <- ggcuminc(CRModelRCR, outcome = c("Capsulitis","Infection","RepairFailure","ImplantRemoval")) +
+```{r}
+#| label: fig-comprisk
+#| fig-caption: "Cumulative incidence of capsulitis in the presence of competing risks (reoperation and repair failure)"
+
+
+Figure7 <- ggcuminc(CRModelRCR, outcome = c("Capsulitis","Infection","RepairFailure","Reoperation")) +
   #add_confidence_interval() +
   add_risktable(
     times = c(0,26,52,104,156),
@@ -2632,15 +2759,15 @@ Figure7 <- ggcuminc(CRModelRCR, outcome = c("Capsulitis","Infection","RepairFail
       x = "Follow up (weeks)",
        y = "Cumulative Percentage Incidence"
       ) +
-    scale_color_discrete(labels = c("Capsulitis", "Implant Removal", "Infection", "RepairFailure")) +
-  scale_linetype_discrete(labels = c("Capsulitis", "Implant Removal", "Infection", "RepairFailure")) +
+    scale_color_discrete(labels = c("Capsulitis", "Reoperation", "Infection", "RepairFailure")) +
+  scale_linetype_discrete(labels = c("Capsulitis", "Reoperation", "Infection", "RepairFailure")) +
   scale_x_continuous(
     limits = c(0, 158)) +
   scale_y_continuous(
     #limits = c(0, 0.35),
     labels = scales::percent, 
     expand = c(0.01, 0)
-  ) + theme_bw()
+  ) + theme_ggdist()
 
 knitr::knit_print(Figure7)
 
