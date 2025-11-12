@@ -115,6 +115,28 @@
         "Built": "R 4.4.3; ; 2025-06-02 01:51:09 UTC; windows"
       }
     },
+    "ISOcodes": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "ISOcodes",
+        "Version": "2025.05.18",
+        "Encoding": "UTF-8",
+        "Title": "Selected ISO Codes",
+        "Authors@R": "c(person(\"Christian\", \"Buchta\", role = \"aut\"),\n             person(\"Kurt\", \"Hornik\", role = c(\"aut\", \"cre\"),\n                    email = \"Kurt.Hornik@R-project.org\",\n\t\t    comment = c(ORCID = \"0000-0003-4198-9911\")))",
+        "Description": "ISO language, territory, currency, script and character codes.\n  Provides ISO 639 language codes, ISO 3166 territory codes, ISO 4217\n  currency codes, ISO 15924 script codes, and the ISO 8859 character codes\n  as well as the UN M.49 area codes.",
+        "Depends": "R (>= 3.5.0)",
+        "License": "GPL-2",
+        "LazyData": "yes",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-05-18 15:54:47 UTC; hornik",
+        "Author": "Christian Buchta [aut],\n  Kurt Hornik [aut, cre] (ORCID: <https://orcid.org/0000-0003-4198-9911>)",
+        "Maintainer": "Kurt Hornik <Kurt.Hornik@R-project.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-05-18 16:07:59 UTC",
+        "Built": "R 4.4.3; ; 2025-05-23 23:55:05 UTC; windows"
+      }
+    },
     "KernSmooth": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -5833,6 +5855,35 @@
         "Archs": "x64"
       }
     },
+    "stopwords": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "stopwords",
+        "Type": "Package",
+        "Title": "Multilingual Stopword Lists",
+        "Version": "2.3",
+        "Authors@R": "c(person(\"Kenneth\", \"Benoit\", email = \"kbenoit@lse.ac.uk\", role = c(\"aut\", \"cre\")),\n    person(\"David\", \"Muhr\", email = \"muhrdavid+github@gmail.com\", role = \"aut\"), \n    person(\"Kohei\", \"Watanabe\", email = \"watanabe.kohei@gmail.com\", role = \"aut\"))",
+        "Description": "Provides multiple sources of stopwords, for use in text analysis and natural language processing.",
+        "License": "MIT + file LICENSE",
+        "Depends": "R (>= 2.10)",
+        "Imports": "ISOcodes",
+        "Suggests": "covr, quanteda, spelling, testthat",
+        "URL": "https://github.com/quanteda/stopwords",
+        "BugReports": "https://github.com/quanteda/stopwords/issues",
+        "Encoding": "UTF-8",
+        "LazyData": "true",
+        "Language": "en-GB",
+        "RoxygenNote": "7.1.1",
+        "NeedsCompilation": "no",
+        "Packaged": "2021-10-28 10:59:10 UTC; kbenoit",
+        "Author": "Kenneth Benoit [aut, cre],\n  David Muhr [aut],\n  Kohei Watanabe [aut]",
+        "Maintainer": "Kenneth Benoit <kbenoit@lse.ac.uk>",
+        "Repository": "CRAN",
+        "Date/Publication": "2021-10-28 11:20:02 UTC",
+        "Built": "R 4.4.0; ; 2024-05-04 00:58:28 UTC; windows"
+      }
+    },
     "stringi": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -7191,7 +7242,7 @@
       "checksum": "f0d413da9243e262ce55bca6b7c27421"
     },
     "PRULO_Dynacord.qmd": {
-      "checksum": "b8ba4b86368bbc7a877c13e7943b05e0"
+      "checksum": "994a253acf6ca6e892cf9567e28e30bd"
     },
     "PRULO_Dynacord_files/figure-html/fig-cca-1.png": {
       "checksum": "50b120f195d026d7a7991d829de4cb5c"
