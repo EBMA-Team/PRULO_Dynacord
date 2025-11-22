@@ -10,7 +10,7 @@ type: "website"
 number-sections: true
 number-depth: 3
 date: "2023-Aug-21"
-date-modified: "2025-Nov-12"
+date-modified: "2025-Nov-22"
 
 bibliography: 
   - Dynacord references.bib
