@@ -39,7 +39,7 @@ format:
     header-includes:
       - '\KOMAoption{captions}{tableheading}'  
 execute: 
-  echo: true
+  echo: false
   warning: false
   message: false
 ---
