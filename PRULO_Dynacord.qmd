@@ -1227,7 +1227,7 @@ gs4_auth(token = drive_token())
 ComplicGraded <- googlesheets4::range_read(
   ss = SheetIDs$StudySS,
   sheet = "ComplicGrade2",
-  range = "P1:Q",
+  range = "U1:V",
   col_names = TRUE,
   col_types = "ic"
   )
