@@ -118,7 +118,6 @@ pacman::p_load(
   "marginaleffects",
   "patchwork",
   "naniar",
-  "quantreg",
   "broom",
   "epoxy",
   "broom.helpers",
