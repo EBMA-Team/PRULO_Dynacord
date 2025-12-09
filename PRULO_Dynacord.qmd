@@ -10,7 +10,7 @@ type: "website"
 number-sections: true
 number-depth: 3
 date: "2023-Aug-21"
-date-modified: "2025-Nov-12"
+date-modified: "2025-Nov-22"
 
 bibliography: 
   - Dynacord references.bib
@@ -39,7 +39,7 @@ format:
     header-includes:
       - '\KOMAoption{captions}{tableheading}'  
 execute: 
-  echo: true
+  echo: false
   warning: false
   message: false
 ---
@@ -222,7 +222,6 @@ get_specific_snapshot <- function(folder_name, base_folder_id = base_folder_id1)
 }
 ```
 
-
 ```{r}
 
 ReplaceTermFun <- function(String) {
@@ -242,8 +241,6 @@ ReplaceTermFun <- function(String) {
 }
 
 ```
-
-
 
 ## Analysis Aim
 
@@ -762,7 +759,9 @@ ComplicTable1 <- ComplicTable |> rename_with(
     .default = ComplicationOccurrence
   )
 ) |> filter(
-  stringr::str_detect(str_to_lower(ComplicationOccurrence),"yes|possible")  & !is.na(CombID)
+  stringr::str_detect(str_to_lower(ComplicationOccurrence),"yes|possible"),
+  !is.na(CombID),
+  OccurDelay <= 52
 )
 
 
@@ -802,8 +801,6 @@ IntraComp1 <- IntraComplic |> rename_with(
 
 ```
 
-
-
 Reoperations were identified and subsetted to append to the Complications Table for survival analysis.
 
 ```{r}
@@ -828,7 +825,6 @@ ComplicReop <- ComplicTable1 |> filter(
 
 
 ```
-
 
 ```{r}
 
@@ -860,10 +856,6 @@ ComplicTable2 <- ComplicTable1 |> bind_rows(
 
 
 ```
-
-
-  
-  
 
 Complication entries were written to an external file for co-author review.
 
@@ -1100,7 +1092,6 @@ Reoperation = case_when(
 
 ```
 
-
 ```{r}
 
 ComplicCensor <- Mastersheet |> filter(
@@ -1197,10 +1188,7 @@ MastersheetFail <- Mastersheet |> filter(
 )
 ```
 
-
 #### Adverse Events Grading
-
-
 
 Complication events were graded in a separate table according to [@felsch2021] and retrieved into the workspace using *googlesheets4*.
 
@@ -1215,7 +1203,7 @@ gs4_auth(token = drive_token())
  googlesheets4::range_write(
    ss = SheetIDs$StudySS,
    data = ComplicTable5 |> filter(
-    Reoperation != "Reoperation"
+    Term4 != "Reoperation"
    ) |> dplyr::select(
      TreatmentUID,
      ComplicationID,
@@ -1226,7 +1214,7 @@ gs4_auth(token = drive_token())
      Term4:Thrombosis
    ),
    sheet = "ComplicGrade2",
-   range = "A1:O"
+   range = "A1:T"
  )
 ```
 
@@ -1238,7 +1226,7 @@ gs4_auth(token = drive_token())
 ComplicGraded <- googlesheets4::range_read(
   ss = SheetIDs$StudySS,
   sheet = "ComplicGrade2",
-  range = "P1:Q",
+  range = "U1:V",
   col_names = TRUE,
   col_types = "ic"
   )
@@ -1431,7 +1419,6 @@ ComplicMaster <- bind_rows(
   )
 
 ```
-
 
 ## Record \[9\] Bias
 
@@ -2652,7 +2639,7 @@ The cohort displayed retear or failure to heal of N = {inline_text(ComplicIncTab
 
 ```
 
-Table 9: 
+Table 9:
 
 ```{r}
 #| label: tbl-complicgrade
@@ -2687,9 +2674,7 @@ as_flex_table(ComplicGradeTable)
 
 ```
 
-
 Incidence rates were altered when viewed within the context of the multistate survival model. The cumulative incidences, when expressed at set follow up times, showed early peak incidence (\<12months of surgery) for infection (Table 10). Cumulative tendon retear also peaked at 20.6% by the 3 year followup. <!--# INSERT UPDATED TEXT -->
-
 
 ```{r}
 #| label: tbl-cuminc
